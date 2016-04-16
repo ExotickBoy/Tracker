@@ -4,23 +4,24 @@ import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.Stream.Builder;
 
-import core.Drawable;
 import core.Driver;
 import core.Edit;
-import core.OnRail;
-import core.RailConnection;
-import core.RailLocation;
-import core.RailSignal;
-import core.Selectable;
-import core.Snap;
 import core.Tool;
-import core.Train;
-import core.TrainStop;
+import interfaces.Drawable;
+import interfaces.OnRail;
+import interfaces.Selectable;
+import items.RailConnection;
+import items.RailLocation;
+import items.RailSignal;
+import items.Train;
+import items.TrainStop;
 import utils.BezierCurves;
+import utils.Snap;
 import utils.Vector2;
 
 import static java.lang.Math.*;
@@ -67,6 +68,7 @@ public class TrainPlaceTool extends Tool {
 	private static final double SNAP_DISTANCE = 30;
 	
 	ArrayList<Function<RailLocation, OnRail>> getPlacing = new ArrayList<>();
+	ArrayList<Consumer<OnRail>> addPlacing = new ArrayList<>();
 	int index;
 	
 	OnRail placing;
@@ -78,8 +80,11 @@ public class TrainPlaceTool extends Tool {
 		setGroup(ToolGroup.PLACE);
 		
 		getPlacing.add(Train::new);
+		addPlacing.add((a) -> Driver.scene.trains.add((Train) a));
 		getPlacing.add(RailSignal::new);
+		addPlacing.add((a) -> Driver.scene.railSignals.add((RailSignal) a));
 		getPlacing.add(TrainStop::new);
+		addPlacing.add((a) -> Driver.scene.trainStops.add((TrainStop) a));
 		
 		Train p = new Train(null);
 		placing = p;
@@ -99,7 +104,7 @@ public class TrainPlaceTool extends Tool {
 	}
 	
 	@Override
-	public void mouseClicked(MouseEvent e) {
+	public void mouseReleased(MouseEvent e) {
 		
 		finalise();
 		
@@ -166,9 +171,11 @@ public class TrainPlaceTool extends Tool {
 	@Override
 	public Edit onFinalise() {
 		
-		if (placing instanceof Selectable) {
+		if (snap != null && placing instanceof Selectable) {
 			
-			scene.addSelectable((Selectable) placing);
+			addPlacing.get(index).accept(placing);
+			placing = null;
+			
 		}
 		
 		return null;
@@ -206,7 +213,7 @@ public class TrainPlaceTool extends Tool {
 		
 		if (placing != null && placing instanceof Drawable && placing.getRailLocation() != null) {
 			
-			((Drawable) placing).draw(g);
+			Driver.draw(placing, g);
 			
 		}
 		
@@ -217,17 +224,13 @@ public class TrainPlaceTool extends Tool {
 		
 		if (snap != null) {
 			
-			snap.draw(g);
-			
+			Driver.draw(snap, g);
 		}
 		
 	}
 	
 	@Override
-	public void takeMessage(String input) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void takeMessage(String input) {}
 	
 	public static boolean withinDistance(Snap<RailLocation> snap) {
 		

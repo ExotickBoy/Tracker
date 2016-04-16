@@ -7,9 +7,9 @@ import javax.swing.KeyStroke;
 
 import core.Driver;
 import core.Edit;
-import core.RailConnection;
-import core.RailPoint;
 import core.Tool;
+import items.RailConnection;
+import items.RailPoint;
 
 public final class ConnectTool extends Tool {
 	

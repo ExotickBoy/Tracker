@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 import core.Driver;
 import core.Edit;
-import core.RailPoint;
 import core.Tool;
+import items.RailPoint;
 import utils.Vector2;
 
 public final class PlaceTool extends ActionTool {

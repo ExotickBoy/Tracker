@@ -10,12 +10,17 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import javax.swing.JOptionPane;
+
+import interfaces.Selectable;
+import items.RailConnection;
+import items.RailPoint;
+import items.RailSignal;
+import items.Train;
+import items.TrainStop;
 
 public final class Scene implements Serializable {
 	
@@ -34,18 +39,10 @@ public final class Scene implements Serializable {
 	public ArrayList<TrainStop> trainStops = new ArrayList<>();
 	public ArrayList<RailSignal> railSignals = new ArrayList<>();
 	
-	HashMap<Class<?>, ArrayList<? extends Selectable>> selectables = new HashMap<>();
-	
 	public String name;
 	
 	public Scene() {
-		
-		selectables.put(RailPoint.class, railPoints);
-		selectables.put(RailConnection.class, connections);
-		selectables.put(Train.class, trains);
-		selectables.put(TrainStop.class, trainStops);
-		selectables.put(RailSignal.class, railSignals);
-		
+	
 	}
 	
 	public String getName() {
@@ -54,24 +51,12 @@ public final class Scene implements Serializable {
 		
 	}
 	
-	public void addSelectable(Selectable selectable) {
-		
-		//selectables.get(selectable.getClass()).
-		
-	}
-	
-	public ArrayList<Selectable> getSelectables() {
-		
-		return selectables.values().stream().flatMap(array -> array.stream()).collect(Collectors.toCollection(ArrayList::new));
-		
-	}
-	
 	public void select(Selectable selectable) {
 		// TODO Auto-generated method stub
 		
 	}
 	
-	void save(File to) {
+	public void save(File to) {
 		
 		try {
 			
@@ -95,7 +80,7 @@ public final class Scene implements Serializable {
 		
 	}
 	
-	static Scene load(File from) {
+	public static Scene load(File from) {
 		
 		ObjectInputStream ois;
 		

@@ -1,4 +1,4 @@
-package core;
+package items;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.atan2;
@@ -18,13 +18,16 @@ import java.io.Serializable;
 
 import javax.imageio.ImageIO;
 
+import core.Driver;
+import interfaces.Drawable;
+import interfaces.Selectable;
 import utils.Vector2;
 
 public final class RailConnection implements Serializable, Drawable, Selectable {
 	
 	private static final long serialVersionUID = -3448982061099628662L;
 	
-	public static final int TRACK_PEACE_SIZE = 25;
+	private static final double TRACK_PEACE_SIZE = 25;
 	
 	private static final int ARC_LENGTH_CALCULATION_RESOLUTION = 50;
 	private static final double BEZIER_ANCHOR_WEIGHT = .8;
@@ -141,7 +144,7 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 				AffineTransform innitialTransform = g.getTransform();
 				g.transform(affineTransform);
 				
-				g.drawImage(railImage, -TRACK_PEACE_SIZE / 2, -TRACK_PEACE_SIZE / 2, TRACK_PEACE_SIZE, TRACK_PEACE_SIZE, null);
+				g.drawImage(railImage, (int) (-TRACK_PEACE_SIZE / 2), (int) (-TRACK_PEACE_SIZE / 2), (int) (TRACK_PEACE_SIZE), (int) (TRACK_PEACE_SIZE), null);
 				
 				g.setTransform(innitialTransform);
 				
@@ -155,7 +158,7 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 		
 	}
 	
-	public void update(){
+	public void update() {
 		
 		updateInterpoints();
 		updateLength();
@@ -165,14 +168,14 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 	
 	public void updateTrains() {
 		
-		Driver.scene.trains.stream().filter((train)->{
+		Driver.scene.trains.stream().filter((train) -> {
 			
 			return train.location.connection == this;
 			
 		}).forEach(Train::recalculateSections);
 		
 	}
-
+	
 	public void updateLength() {
 		
 		length = cubicBezierArcLength(p0, p1, p2, p3, ARC_LENGTH_CALCULATION_RESOLUTION);

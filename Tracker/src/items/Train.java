@@ -1,4 +1,4 @@
-package core;
+package items;
 
 import java.awt.Graphics2D;
 import java.io.Serializable;
@@ -7,22 +7,26 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.function.Function;
 
+import interfaces.Drawable;
+import interfaces.OnRail;
+import interfaces.Selectable;
+import utils.Collider;
+
 public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	
 	private static final long serialVersionUID = 0L;
 	
 	private static final String DEFAULT_TRAIN = "Train";
 	
-	public ArrayList<TrainSection> sections = new ArrayList<>();
-	
 	private HashMap<Train, String> trainToName = new HashMap<>();
 	
 	String name;
 	
 	RailLocation location;
+	RailLocation going;
 	double speed = 0;
 	
-	RailLocation going;
+	public ArrayList<TrainSection> sections = new ArrayList<>();
 	
 	public Train(RailLocation location) {
 		
@@ -53,6 +57,13 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	public RailLocation getRailLocation() {
 		
 		return location;
+		
+	}
+	
+	@Override
+	public Collider getCollider() {
+		
+		return sections.stream().map(TrainSection::getCollider).reduce(Collider::combineCollider).get();
 		
 	}
 	
@@ -207,9 +218,10 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 		
 	}
 	
-	public RailLocation getLocation() {
+	@Override
+	public boolean willDrawCollider() {
 		
-		return location;
+		return true;
 		
 	}
 	

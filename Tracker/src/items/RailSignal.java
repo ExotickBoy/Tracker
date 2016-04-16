@@ -1,9 +1,7 @@
-package core;
+package items;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.atan2;
-import static java.lang.Math.cos;
-import static java.lang.Math.sin;
 
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -11,13 +9,19 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
+import interfaces.Drawable;
+import interfaces.OnRail;
+import interfaces.Selectable;
+import utils.Collider;
 import utils.Vector2;
+import utils.Collider.Triangle;
 
-public class RailSignal implements Serializable, Drawable, OnRail,Selectable {
+public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -28,6 +32,10 @@ public class RailSignal implements Serializable, Drawable, OnRail,Selectable {
 	private static final int RED_COLOR = 0;
 	private static final int AMBER_COLOR = 1;
 	private static final int GREEN_COLOR = 2;
+	
+	private static final double SIGNAL_LENGTH = 25;
+	private static final double SIGNAL_WIDTH = 12.5;
+	private static final double SIGNAL_OFFSET = 13;
 	
 	private transient static BufferedImage redSignalTexture;
 	private transient static BufferedImage amberSignalTexture;
@@ -84,18 +92,48 @@ public class RailSignal implements Serializable, Drawable, OnRail,Selectable {
 	@Override
 	public void draw(Graphics2D g) {
 		
-		Vector2 position = location.getVector();
-		Vector2 direction = location.getDerivativeVector();
-		double ang = atan2(direction.x, direction.y) - PI / 2;
-		
-		AffineTransform affineTransform = new AffineTransform(cos(ang), -sin(ang), sin(ang), cos(ang), position.x, position.y);
+		AffineTransform affineTransform = getRailPointTransform();
+		affineTransform.rotate(PI / 2);
 		AffineTransform innitialTransform = g.getTransform();
 		g.transform(affineTransform);
 		
-		g.drawImage(colorToImage.get(color), -RailConnection.TRACK_PEACE_SIZE / 2, RailConnection.TRACK_PEACE_SIZE / 2, RailConnection.TRACK_PEACE_SIZE / 2,
-				RailConnection.TRACK_PEACE_SIZE, null);
-				
+		g.drawImage(colorToImage.get(color), (int) (-SIGNAL_WIDTH / 2), (int) (SIGNAL_OFFSET), (int) SIGNAL_WIDTH, (int) SIGNAL_LENGTH, null);
+		
 		g.setTransform(innitialTransform);
+		
+		getCollider().draw(g);
+		
+	}
+
+	@Override
+	public Collider getCollider() {
+		
+		Vector2 position = getRailLocation().getVector();
+		Vector2 direction = getRailLocation().getDerivativeVector();
+		double ang = PI / 2 - atan2(direction.x, direction.y);
+		
+		Vector2 point1 = new Vector2(-SIGNAL_WIDTH / 2, SIGNAL_OFFSET);
+		Vector2 point2 = new Vector2(SIGNAL_WIDTH / 2, SIGNAL_OFFSET);
+		Vector2 point3 = new Vector2(SIGNAL_WIDTH / 2, SIGNAL_OFFSET + SIGNAL_LENGTH);
+		Vector2 point4 = new Vector2(-SIGNAL_WIDTH / 2, SIGNAL_OFFSET + SIGNAL_LENGTH);
+		
+		point1 = Vector2.add(Vector2.rotate(point1, ang), position);
+		point2 = Vector2.add(Vector2.rotate(point2, ang), position);
+		point3 = Vector2.add(Vector2.rotate(point3, ang), position);
+		point4 = Vector2.add(Vector2.rotate(point4, ang), position);
+		
+		ArrayList<Triangle> triangles = new ArrayList<>();
+		triangles.add(new Triangle(point1, point2, point3));
+		triangles.add(new Triangle(point3, point4, point1));
+		
+		return new Collider(triangles);
+		
+	}
+
+	@Override
+	public boolean willDrawCollider() {
+		
+		return true;
 		
 	}
 	

@@ -6,7 +6,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JPanel;
 
 import core.Driver;
-import core.TrainStop;
+import items.TrainStop;
 
 public class TrainStopTab extends ComboBoxTab<TrainStop> {
 	

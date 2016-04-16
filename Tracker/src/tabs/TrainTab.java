@@ -23,9 +23,9 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 
 import core.Driver;
-import core.RailLocation;
-import core.Train;
-import core.TrainSection;
+import items.RailLocation;
+import items.Train;
+import items.TrainSection;
 import utils.Units;
 
 public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
@@ -379,45 +379,28 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 	@Override
 	public void onSwitchedTo() {
 		
+		setComboBoxModel(new DefaultComboBoxModel<Train>(getScene().trains.stream().toArray(size -> new Train[size])));
 		updatePanel();
 		
 	}
 	
 	@Override
-	public void onSwitchedAway() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onSwitchedAway() {}
 	
 	@Override
-	public void onToolActivate() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onToolActivate() {}
 	
 	@Override
-	public void onToolFinalise() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onToolFinalise() {}
 	
 	@Override
-	public void onToolAbort() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onToolAbort() {}
 	
 	@Override
-	public void onUndo() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onUndo() {}
 	
 	@Override
-	public void onRedo() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onRedo() {}
 	
 	private void updatePanel() {
 		

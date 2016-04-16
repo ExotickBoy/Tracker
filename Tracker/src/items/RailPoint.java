@@ -1,4 +1,4 @@
-package core;
+package items;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.cos;
@@ -11,6 +11,9 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+import core.Driver;
+import interfaces.Drawable;
+import interfaces.Selectable;
 import utils.Vector2;
 
 public final class RailPoint implements Serializable, Drawable, Selectable {

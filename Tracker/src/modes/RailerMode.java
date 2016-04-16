@@ -4,9 +4,9 @@ import java.awt.Graphics2D;
 import java.util.stream.Stream;
 import java.util.stream.Stream.Builder;
 
-import core.Drawable;
 import core.Driver;
 import core.Mode;
+import interfaces.Drawable;
 
 public class RailerMode extends Mode {
 	
@@ -19,16 +19,10 @@ public class RailerMode extends Mode {
 	}
 	
 	@Override
-	public void onSwitchedTo() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onSwitchedTo() {}
 	
 	@Override
-	public void onSwitchedAway() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onSwitchedAway() {}
 	
 	@Override
 	public void draw(Graphics2D g) {
@@ -40,7 +34,7 @@ public class RailerMode extends Mode {
 		
 		toDraw.build().forEach((drawable) -> {
 			
-			drawable.draw(g);
+			Driver.draw(drawable, g);
 			
 		});
 		

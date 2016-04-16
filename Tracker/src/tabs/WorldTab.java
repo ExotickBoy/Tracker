@@ -27,44 +27,24 @@ public class WorldTab extends Tab {
 	}
 	
 	@Override
-	public void onToolActivate() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onToolActivate() {}
 	
 	@Override
-	public void onToolFinalise() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onToolFinalise() {}
 	
 	@Override
-	public void onToolAbort() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onToolAbort() {}
 	
 	@Override
-	public void onUndo() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onUndo() {}
 	
 	@Override
-	public void onRedo() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onRedo() {}
 	
 	@Override
-	public void onSwitchedTo() {
-		
-	}
+	public void onSwitchedTo() {}
 	
 	@Override
-	public void onSwitchedAway() {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onSwitchedAway() {}
 	
 }

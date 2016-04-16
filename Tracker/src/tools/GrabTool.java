@@ -21,10 +21,10 @@ import javax.swing.KeyStroke;
 
 import core.Driver;
 import core.Edit;
-import core.RailConnection;
-import core.RailPoint;
-import core.Snap;
 import core.Tool;
+import items.RailConnection;
+import items.RailPoint;
+import utils.Snap;
 import utils.Vector2;
 
 public final class GrabTool extends Tool {
@@ -199,7 +199,7 @@ public final class GrabTool extends Tool {
 		
 	}
 	
-	private class OriginSnap extends core.Snap<Vector2> {
+	private class OriginSnap extends utils.Snap<Vector2> {
 		
 		boolean isHorizontal;
 		Vector2 centre;
@@ -437,7 +437,7 @@ public final class GrabTool extends Tool {
 	
 	@Override
 	public Edit onFinalise() {
-				
+		
 		if (Vector2.magnitude(change) == 0) {
 			
 			return null;
@@ -585,13 +585,13 @@ public final class GrabTool extends Tool {
 		
 		if (horizontalSnap != null) {
 			
-			horizontalSnap.draw(g);
+			Driver.draw(horizontalSnap, g);
 			
 		}
 		
 		if (verticalSnap != null) {
 			
-			verticalSnap.draw(g);
+			Driver.draw(verticalSnap, g);
 			
 		}
 		

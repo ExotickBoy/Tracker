@@ -20,9 +20,9 @@ import javax.swing.KeyStroke;
 
 import core.Driver;
 import core.Edit;
-import core.RailPoint;
-import core.Snap;
 import core.Tool;
+import items.RailPoint;
+import utils.Snap;
 import utils.Vector2;
 
 public final class RotateTool extends Tool {
@@ -361,7 +361,7 @@ public final class RotateTool extends Tool {
 		
 		if (snap != null) {
 			
-			snap.draw(g);
+			Driver.draw(snap, g);
 			
 		}
 		

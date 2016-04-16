@@ -1,6 +1,7 @@
 package core;
 
 import java.awt.BorderLayout;
+import java.awt.Graphics2D;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -13,6 +14,15 @@ import components.MenuBar;
 import components.TabsPanel;
 import components.ToolBar;
 import components.ViewPanel;
+import interfaces.Collidable;
+import interfaces.Drawable;
+import items.RailConnection;
+import items.RailLocation;
+import items.RailPoint;
+import items.RailSignal;
+import items.Train;
+import items.TrainSection;
+import items.TrainStop;
 import modes.RailerMode;
 import modes.TrainMode;
 import tools.ConnectTool;
@@ -127,7 +137,7 @@ public final class Driver {
 		Tool.setScene(scene);
 		
 		RailPoint rp1 = new RailPoint(new Vector2(100, 100));
-		RailPoint rp2 = new RailPoint(new Vector2(300, 100));
+		RailPoint rp2 = new RailPoint(new Vector2(WINDOW_WIDTH - 100, WINDOW_HEIGHT - 100));
 		RailConnection rc = new RailConnection(rp1, rp2);
 		
 		scene.railPoints.add(rp1);
@@ -154,6 +164,18 @@ public final class Driver {
 		frame.setLocationRelativeTo(null);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
+		
+	}
+	
+	public static void draw(Drawable drawable, Graphics2D g) {
+		
+		drawable.draw(g);
+		
+		if (drawable instanceof Collidable) {
+			
+			((Collidable) drawable).getCollider().draw(g);
+			
+		}
 		
 	}
 	

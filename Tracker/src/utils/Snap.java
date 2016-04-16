@@ -1,4 +1,6 @@
-package core;
+package utils;
+
+import interfaces.Drawable;
 
 public abstract class Snap<T> implements Drawable {
 	

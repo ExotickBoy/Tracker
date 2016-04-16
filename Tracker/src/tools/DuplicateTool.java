@@ -8,8 +8,8 @@ import javax.swing.KeyStroke;
 
 import core.Driver;
 import core.Edit;
-import core.RailPoint;
 import core.Tool;
+import items.RailPoint;
 import utils.Vector2;
 
 public final class DuplicateTool extends ActionTool {

@@ -27,7 +27,7 @@ import javax.swing.text.DefaultFormatterFactory;
 
 import core.Driver;
 import core.Edit;
-import core.RailPoint;
+import items.RailPoint;
 
 public final class RailPointTab extends ComboBoxTab<RailPoint> implements MouseListener {
 	

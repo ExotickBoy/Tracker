@@ -1,8 +1,6 @@
-package core;
+package items;
 
 import static java.lang.Math.atan2;
-import static java.lang.Math.cos;
-import static java.lang.Math.sin;
 
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -10,12 +8,18 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
+import interfaces.Drawable;
+import interfaces.OnRail;
+import interfaces.Selectable;
+import utils.Collider;
 import utils.Vector2;
+import utils.Collider.Triangle;
 
-public abstract class TrainSection implements Serializable, Drawable, OnRail,Selectable {
+public abstract class TrainSection implements Serializable, Drawable, OnRail, Selectable {
 	
 	private static final long serialVersionUID = 0L;
 	
@@ -91,13 +95,13 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail,Sel
 		setTexture(getTexture(path));
 		
 	}
-
+	
 	protected void setTexture(BufferedImage texture) {
 		
 		this.texture = texture;
 		
 	}
-
+	
 	public double getMass() {
 		
 		return mass;
@@ -148,11 +152,7 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail,Sel
 	
 	public void draw(Graphics2D g) {
 		
-		Vector2 position = location.getVector();
-		Vector2 direction = location.getDerivativeVector();
-		double ang = atan2(direction.x, direction.y);
-		
-		AffineTransform affineTransform = new AffineTransform(cos(ang), -sin(ang), sin(ang), cos(ang), position.x, position.y);
+		AffineTransform affineTransform = getRailPointTransform();
 		AffineTransform innitialTransform = g.getTransform();
 		g.transform(affineTransform);
 		
@@ -183,6 +183,31 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail,Sel
 		
 	}
 	
+	@Override
+	public Collider getCollider() {
+		
+		Vector2 position = getRailLocation().getVector();
+		Vector2 direction = getRailLocation().getDerivativeVector();
+		double ang = -atan2(direction.x, direction.y);
+		
+		Vector2 point1 = new Vector2(-TRAIN_WIDTH / 2, -TRAIN_LENGTH / 2);
+		Vector2 point2 = new Vector2(TRAIN_WIDTH / 2, -TRAIN_LENGTH / 2);
+		Vector2 point3 = new Vector2(TRAIN_WIDTH / 2, TRAIN_LENGTH / 2);
+		Vector2 point4 = new Vector2(-TRAIN_WIDTH / 2, TRAIN_LENGTH / 2);
+		
+		point1 = Vector2.add(Vector2.rotate(point1, ang), position);
+		point2 = Vector2.add(Vector2.rotate(point2, ang), position);
+		point3 = Vector2.add(Vector2.rotate(point3, ang), position);
+		point4 = Vector2.add(Vector2.rotate(point4, ang), position);
+		
+		ArrayList<Triangle> triangles = new ArrayList<>();
+		triangles.add(new Triangle(point1, point2, point3));
+		triangles.add(new Triangle(point3, point4, point1));
+		
+		return new Collider(triangles);
+		
+	}
+	
 	private static BufferedImage getTexture(String path) {
 		
 		try {
@@ -195,6 +220,13 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail,Sel
 			return null;
 			
 		}
+		
+	}
+	
+	@Override
+	public boolean willDrawCollider() {
+		
+		return true;
 		
 	}
 	

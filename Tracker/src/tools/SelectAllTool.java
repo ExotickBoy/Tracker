@@ -9,7 +9,7 @@ import javax.swing.KeyStroke;
 
 import core.Driver;
 import core.Edit;
-import core.RailPoint;
+import items.RailPoint;
 
 public class SelectAllTool extends ActionTool {
 	

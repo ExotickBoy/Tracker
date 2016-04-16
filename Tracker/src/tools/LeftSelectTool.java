@@ -14,8 +14,8 @@ import java.util.Set;
 
 import core.Driver;
 import core.Edit;
-import core.RailPoint;
 import core.Tool;
+import items.RailPoint;
 import utils.Vector2;
 
 public final class LeftSelectTool extends Tool {
