@@ -196,21 +196,6 @@ public final class RotateTool extends Tool {
 	}
 	
 	@Override
-	public void mouseReleased(MouseEvent e) {
-		
-		if (e.getButton() == 3) {
-			
-			abort();
-			
-		} else {
-			
-			finalise();
-			
-		}
-		
-	}
-	
-	@Override
 	public boolean isActivatable() {
 		
 		return scene.selected.size() > 0;
@@ -424,7 +409,7 @@ public final class RotateTool extends Tool {
 			
 		}).forEach(snapBuilder::accept);
 		
-		return snapBuilder.build().filter(RotateTool::withinDistance).min(Snap::sortByDistance).orElse(null);
+		return snapBuilder.build().filter(RotateTool::withinDistance).filter(Snap::isValid).min(Snap::sortByDistance).orElse(null);
 		
 	}
 	
@@ -453,5 +438,6 @@ public final class RotateTool extends Tool {
 		}
 		
 	}
+	
 	
 }

@@ -10,16 +10,14 @@ import javax.swing.event.ChangeListener;
 import core.Driver;
 import core.Tab;
 import tabs.RailPointTab;
-import tabs.TrainStopTab;
 import tabs.TrainTab;
 import tabs.WorldTab;
 
 public final class TabsPanel extends JTabbedPane {
 	
-	private static final RailPointTab RAIL_POINT_TAB = new RailPointTab();
-	private static final TrainTab TRAIN_TAB = new TrainTab();
-	private static final WorldTab WORLD_TAB = new WorldTab();
-	private static final TrainStopTab TRAIN_STOP_TAB = new TrainStopTab();
+	public static final RailPointTab RAIL_POINT_TAB = new RailPointTab();
+	public static final TrainTab TRAIN_TAB = new TrainTab();
+	public static final WorldTab WORLD_TAB = new WorldTab();
 	
 	private static final long serialVersionUID = 218536682475195089L;
 	private ArrayList<Tab> tabs;
@@ -62,7 +60,6 @@ public final class TabsPanel extends JTabbedPane {
 		tabs.add(WORLD_TAB);
 		tabs.add(RAIL_POINT_TAB);
 		tabs.add(TRAIN_TAB);
-		tabs.add(TRAIN_STOP_TAB);
 		
 		tabs.forEach((tab) -> {
 			
@@ -82,6 +79,12 @@ public final class TabsPanel extends JTabbedPane {
 	public void onSwitchedAway() {
 		
 		tabs.get(getSelectedIndex()).onSwitchedAway();
+		
+	}
+	
+	public void onModeSwitched(){
+		
+		tabs.get(getSelectedIndex()).onModeSwitched();
 		
 	}
 	

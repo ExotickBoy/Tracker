@@ -1,30 +1,33 @@
 package tools;
 
+import static java.lang.Math.PI;
+
 import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.Stream.Builder;
 
 import core.Driver;
 import core.Edit;
 import core.Tool;
+import interfaces.Collidable;
 import interfaces.Drawable;
 import interfaces.OnRail;
 import interfaces.Selectable;
 import items.RailConnection;
 import items.RailLocation;
+import items.RailPoint;
 import items.RailSignal;
 import items.Train;
 import items.TrainStop;
 import utils.BezierCurves;
 import utils.Snap;
 import utils.Vector2;
-
-import static java.lang.Math.*;
 
 public class TrainPlaceTool extends Tool {
 	
@@ -48,11 +51,63 @@ public class TrainPlaceTool extends Tool {
 		}
 		
 		@Override
-		public void draw(Graphics2D g) {
+		public void draw(Graphics2D g) {}
+		
+		@Override
+		public boolean isPermanent() {
 			
-			// g.draw(new Line2D.Double(mouse.x, mouse.y, location.x, location.y));
+			return false;
 			
 		}
+		
+	}
+	
+	private class OppositeSnap extends Snap<RailLocation> {
+		
+		public OppositeSnap(Vector2 mouse, RailLocation to) {
+			
+			setDestincation(new RailLocation(to));
+			getDestincation().toggleForward();
+			setDistance(Vector2.distance(getDestincation().getVector(), mouse) - OPPOSITE_SNAP_DISTANCE);
+			
+		}
+		
+		@Override
+		public void draw(Graphics2D g) {}
+		
+		@Override
+		public boolean isPermanent() {
+			
+			return false;
+			
+		}
+		
+	}
+	
+	private class OnPointSnap extends Snap<RailLocation> {
+		
+		public OnPointSnap(Vector2 mouse, RailPoint point) {
+			
+			RailConnection to = scene.connections.stream().filter((connection) -> {
+				
+				return connection.has(point);
+				
+			}).findFirst().orElse(null);
+			
+			if (to != null) {
+				
+				setDestincation(new RailLocation(to.point1 == point ? 1 : 0, to));
+				setDistance(Vector2.distance(getDestincation().getVector(), mouse) - OPPOSITE_SNAP_DISTANCE);
+				
+				getDestincation().setForward(Vector2.project(Vector2.subtract(BezierCurves.cubicBezier(to.p0, to.p1, to.p2, to.p3, getDestincation().getT()), mouse),
+						Vector2.rotate(BezierCurves.cubicBezierDerivative(to.p0, to.p1, to.p2, to.p3, getDestincation().getT()), PI / 2)) < 0);
+						
+			}
+			
+		}
+		
+		@Override
+		public void draw(Graphics2D g) {}
 		
 		@Override
 		public boolean isPermanent() {
@@ -66,6 +121,7 @@ public class TrainPlaceTool extends Tool {
 	private static final String TOOL_NAME = "Place Train";
 	
 	private static final double SNAP_DISTANCE = 30;
+	private static final double OPPOSITE_SNAP_DISTANCE = 12;
 	
 	ArrayList<Function<RailLocation, OnRail>> getPlacing = new ArrayList<>();
 	ArrayList<Consumer<OnRail>> addPlacing = new ArrayList<>();
@@ -73,6 +129,7 @@ public class TrainPlaceTool extends Tool {
 	
 	OnRail placing;
 	Snap<RailLocation> snap;
+	boolean canPlace = false;
 	
 	public TrainPlaceTool() {
 		
@@ -105,9 +162,7 @@ public class TrainPlaceTool extends Tool {
 	
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		
-		finalise();
-		
+				
 	}
 	
 	@Override
@@ -142,6 +197,26 @@ public class TrainPlaceTool extends Tool {
 			
 		}
 		
+		if (placing != null && placing.getRailLocation() != null) {
+			
+			ArrayList<Collidable> collidesWith = getCollidables().stream().filter(other -> {
+				
+				return other.isByRail() == placing.isByRail() && other.collidesWith(placing);
+				
+			}).collect(Collectors.toCollection(ArrayList::new));
+			
+			canPlace = collidesWith.size() == 0;
+			
+			placing.setDrawCollider(collidesWith.size() > 0);
+			
+			getCollidables().forEach((collidable) -> {
+				
+				collidable.setDrawCollider(collidesWith.contains(collidable) && collidesWith.size() > 0);
+				
+			});
+			
+		}
+		
 	}
 	
 	@Override
@@ -171,7 +246,7 @@ public class TrainPlaceTool extends Tool {
 	@Override
 	public Edit onFinalise() {
 		
-		if (snap != null && placing instanceof Selectable) {
+		if (canPlace & snap != null && placing instanceof Selectable) {
 			
 			addPlacing.get(index).accept(placing);
 			placing = null;
@@ -225,6 +300,7 @@ public class TrainPlaceTool extends Tool {
 		if (snap != null) {
 			
 			Driver.draw(snap, g);
+			
 		}
 		
 	}
@@ -248,7 +324,54 @@ public class TrainPlaceTool extends Tool {
 			
 		}).forEach(snapBuilder::accept);
 		
-		return snapBuilder.build().filter(TrainPlaceTool::withinDistance).min(Snap::sortByDistance).orElse(null);
+		getOnRails().stream().filter(item -> {
+			
+			return placing != null && placing.isByRail() && item.isByRail() && getOnRails().stream().map(OnRail::getRailLocation).noneMatch((location) -> {
+				
+				return location.getConnection() == item.getRailLocation().getConnection() && location.getT() == item.getRailLocation().getT()
+						&& location.isForward() != item.getRailLocation().isForward();
+						
+			});
+			
+		}).map((onRail) -> {
+			
+			return new OppositeSnap(mouse, onRail.getRailLocation());
+			
+		}).forEach(snapBuilder::accept);
+		
+		scene.railPoints.stream().map((railPoint) -> {
+			
+			return new OnPointSnap(mouse, railPoint);
+			
+		}).forEach(snapBuilder::accept);
+		
+		return snapBuilder.build().filter(TrainPlaceTool::withinDistance).filter(Snap::isValid).min(Snap::sortByDistance).orElse(null);
+		
+	}
+	
+	private ArrayList<Collidable> getCollidables() {
+		
+		return Stream.concat(Stream.concat(scene.railSignals.stream(), scene.trainStops.stream()), scene.trains.stream()).collect(Collectors.toCollection(ArrayList::new));
+		
+	}
+	
+	private ArrayList<OnRail> getOnRails() {
+		
+		return Stream.concat(Stream.concat(scene.railSignals.stream(), scene.trainStops.stream()), scene.trains.stream()).collect(Collectors.toCollection(ArrayList::new));
+		
+	}
+	
+	@Override
+	public boolean willFinaliseOnRealeaseLeftMouse() {
+		
+		return true;
+		
+	}
+	
+	@Override
+	public boolean willAbortOnRealeaseRightMouse() {
+		
+		return false;
 		
 	}
 	

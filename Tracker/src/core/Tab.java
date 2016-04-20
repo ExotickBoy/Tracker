@@ -16,6 +16,8 @@ public abstract class Tab extends JPanel {
 	
 	public abstract void onSwitchedAway();
 	
+	public abstract void onModeSwitched();
+	
 	public abstract void onToolActivate();
 	
 	public abstract void onToolFinalise();

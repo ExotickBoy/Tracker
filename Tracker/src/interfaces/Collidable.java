@@ -12,6 +12,10 @@ public interface Collidable extends Drawable {
 		
 	}
 	
+	public boolean isByRail();
+	
 	public boolean willDrawCollider();
+	
+	public void setDrawCollider(boolean willDrawCollider);
 	
 }

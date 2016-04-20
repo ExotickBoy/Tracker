@@ -17,9 +17,11 @@ public final class MenuBar extends JMenuBar {
 	public static JMenu fileMenu;
 	public static JMenu editMenu;
 	
+	public static JMenuItem newItem;
 	public static JMenuItem saveItem;
 	public static JMenuItem saveAsItem;
 	public static JMenuItem openItem;
+	
 	public static JMenuItem undoItem;
 	public static JMenuItem redoItem;
 	
@@ -28,6 +30,17 @@ public final class MenuBar extends JMenuBar {
 		fileMenu = new JMenu();
 		fileMenu.setText("File");
 		fileMenu.setMnemonic('f');
+		
+		newItem = new JMenuItem();
+		newItem.setText("New");
+		newItem.setMnemonic('n');
+		newItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK));
+		newItem.setToolTipText("Makes a new scene");
+		newItem.addActionListener((e) -> {
+			
+			Driver.newScene();
+			
+		});
 		
 		saveItem = new JMenuItem();
 		saveItem.setText("Save");
@@ -62,6 +75,7 @@ public final class MenuBar extends JMenuBar {
 			
 		});
 		
+		fileMenu.add(newItem);
 		fileMenu.add(saveItem);
 		fileMenu.add(saveAsItem);
 		fileMenu.add(openItem);

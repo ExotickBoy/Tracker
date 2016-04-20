@@ -13,7 +13,7 @@ import utils.Vector2;
 public final class RightSelectTool extends Tool {
 	
 	private static final String TOOL_NAME = "Select";
-
+	
 	private static final int SELECT_RADIOUS = 5;
 	
 	ArrayList<RailPoint> before;
@@ -24,7 +24,7 @@ public final class RightSelectTool extends Tool {
 		setMode(Driver.RAILER_MODE);
 		
 	}
-		
+	
 	@Override
 	public void mousePressed(MouseEvent e) {
 		
@@ -126,10 +126,10 @@ public final class RightSelectTool extends Tool {
 	
 	@Override
 	public void drawUnder(Graphics2D g) {}
-
+	
 	@Override
 	public void takeMessage(String input) {
-		
+	
 	}
 	
 }

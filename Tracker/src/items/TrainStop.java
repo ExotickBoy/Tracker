@@ -36,6 +36,7 @@ public final class TrainStop implements Serializable, Drawable, OnRail, Selectab
 	
 	private static HashMap<TrainStop, String> trainStopToName = new HashMap<>();
 	private static BufferedImage texture;
+	private boolean willDrawCollider;
 	
 	RailLocation location;
 	String name;
@@ -165,6 +166,20 @@ public final class TrainStop implements Serializable, Drawable, OnRail, Selectab
 	
 	@Override
 	public boolean willDrawCollider() {
+		
+		return willDrawCollider;
+		
+	}
+	
+	@Override
+	public void setDrawCollider(boolean willDrawCollider) {
+		
+		this.willDrawCollider = willDrawCollider;
+		
+	}
+	
+	@Override
+	public boolean isByRail() {
 		
 		return true;
 		

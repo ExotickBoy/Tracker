@@ -85,6 +85,18 @@ public abstract class Tool implements MouseMotionListener, MouseListener, MouseW
 		
 	}
 	
+	public boolean willFinaliseOnRealeaseLeftMouse() {
+		
+		return true;
+		
+	}
+	
+	public boolean willAbortOnRealeaseRightMouse() {
+		
+		return true;
+		
+	}
+	
 	public boolean isOverwritable() {
 		
 		return true;
@@ -201,5 +213,4 @@ public abstract class Tool implements MouseMotionListener, MouseListener, MouseW
 	
 	@Override
 	public void keyTyped(KeyEvent e) {}
-	
 }

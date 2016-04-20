@@ -108,7 +108,7 @@ public final class LeftSelectTool extends Tool {
 	
 	@Override
 	public void onActivate() {
-				
+		
 		selectedBefore = new ArrayList<>(scene.selected);
 		
 	}
@@ -203,5 +203,6 @@ public final class LeftSelectTool extends Tool {
 	
 	@Override
 	public void takeMessage(String input) {}
+	
 	
 }

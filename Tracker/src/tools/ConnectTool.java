@@ -1,17 +1,15 @@
 package tools;
 
-import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 
 import javax.swing.KeyStroke;
 
 import core.Driver;
 import core.Edit;
-import core.Tool;
 import items.RailConnection;
 import items.RailPoint;
 
-public final class ConnectTool extends Tool {
+public final class ConnectTool extends ActionTool {
 	
 	private static final String TOOL_NAME = "Connect";
 	private static final KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_F, 0);
@@ -30,39 +28,23 @@ public final class ConnectTool extends Tool {
 	@Override
 	public boolean isActivatable() {
 		
-		return scene.selected.size() == 2;
+		return scene.selected.size() == 2 && !scene.connections.stream().anyMatch((railConnection) -> {
+			
+			return railConnection.has(scene.selected.get(0)) && railConnection.has(scene.selected.get(1));
+			
+		});
 		
 	}
 	
 	@Override
-	public void onActivate() {
+	public Edit action() {
 		
 		RailPoint point1 = scene.selected.get(0);
 		RailPoint point2 = scene.selected.get(1);
 		
 		connection = new RailConnection(point1, point2);
 		
-		boolean exists = scene.connections.stream().anyMatch((railConnection) -> {
-			
-			return railConnection.has(point1) && railConnection.has(point2);
-			
-		});
-		
-		if (!exists) {
-			
-			scene.connections.add(connection);
-			finalise();
-			
-		} else {
-			
-			abort();
-			
-		}
-		
-	}
-	
-	@Override
-	public Edit onFinalise() {
+		scene.connections.add(connection);
 		
 		return new Edit() {
 			
@@ -85,24 +67,5 @@ public final class ConnectTool extends Tool {
 		};
 		
 	}
-	
-	@Override
-	public void onAbort() {}
-	
-	@Override
-	public void drawOver(Graphics2D g) {}
-	
-	@Override
-	public void drawUnder(Graphics2D g) {}
-	
-	@Override
-	public String getMessage() {
-		
-		return null;
-		
-	}
-	
-	@Override
-	public void takeMessage(String input) {}
 	
 }

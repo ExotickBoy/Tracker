@@ -24,6 +24,7 @@ import items.Train;
 import items.TrainSection;
 import items.TrainStop;
 import modes.RailerMode;
+import modes.RunningMode;
 import modes.TrainMode;
 import tools.ConnectTool;
 import tools.DeleteTool;
@@ -52,6 +53,7 @@ public final class Driver {
 	
 	public static final TrainMode TRAIN_MODE = new TrainMode();
 	public static final RailerMode RAILER_MODE = new RailerMode();
+	public static final RunningMode RUNNING_MODE = new RunningMode();
 	
 	// tools
 	
@@ -128,27 +130,26 @@ public final class Driver {
 		
 		modes.add(RAILER_MODE);
 		modes.add(TRAIN_MODE);
+		modes.add(RUNNING_MODE);
 		
-		scene = new Scene();
 		mode = RAILER_MODE;
 		mode.onSwitchedTo();
 		
+		frame = new JFrame(FRAME_TITLE);
+		
+		if (args.length != 0) {
+			
+			currentSave = new File(args[0]);
+			scene = Scene.load(currentSave);
+			
+		} else {
+			
+			newScene();
+			
+		}
+		
 		Tab.setScene(scene);
 		Tool.setScene(scene);
-		
-		RailPoint rp1 = new RailPoint(new Vector2(100, 100));
-		RailPoint rp2 = new RailPoint(new Vector2(WINDOW_WIDTH - 100, WINDOW_HEIGHT - 100));
-		RailConnection rc = new RailConnection(rp1, rp2);
-		
-		scene.railPoints.add(rp1);
-		scene.railPoints.add(rp2);
-		scene.connections.add(rc);
-		Train train = new Train(new RailLocation(.1, rc));
-		train.addSection(TrainSection.Wagon::new);
-		train.addSection(TrainSection.Wagon::new);
-		scene.trains.add(train);
-		scene.trainStops.add(new TrainStop(new RailLocation(.9, rc)));
-		scene.railSignals.add(new RailSignal(new RailLocation(.5, rc)));
 		
 		JPanel contentPane = new JPanel(new BorderLayout());
 		JPanel left = new JPanel(new BorderLayout());
@@ -157,12 +158,13 @@ public final class Driver {
 		contentPane.add(tabsPanel = new TabsPanel(), BorderLayout.EAST);
 		contentPane.add(left, BorderLayout.CENTER);
 		
-		frame = new JFrame(FRAME_TITLE);
 		frame.setContentPane(contentPane);
 		frame.setJMenuBar(new MenuBar());
 		frame.pack();
 		frame.setLocationRelativeTo(null);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);		
+		
+		updateFrameTitle();
 		frame.setVisible(true);
 		
 	}
@@ -171,7 +173,7 @@ public final class Driver {
 		
 		drawable.draw(g);
 		
-		if (drawable instanceof Collidable) {
+		if (drawable instanceof Collidable && ((Collidable) drawable).willDrawCollider()) {
 			
 			((Collidable) drawable).getCollider().draw(g);
 			
@@ -186,6 +188,8 @@ public final class Driver {
 		Driver.mode.onSwitchedAway();
 		Driver.mode = mode;
 		Driver.mode.onSwitchedTo();
+		
+		tabsPanel.onModeSwitched();
 		
 		frame.repaint();
 		
@@ -332,6 +336,34 @@ public final class Driver {
 		
 	}
 	
+	public static void newScene() {
+		
+		scene = new Scene();
+		
+		RailPoint rp1 = new RailPoint(new Vector2(100, 100));
+		RailPoint rp2 = new RailPoint(new Vector2(WINDOW_WIDTH - 100, WINDOW_HEIGHT - 100));
+		RailConnection rc = new RailConnection(rp1, rp2);
+		
+		scene.railPoints.add(rp1);
+		scene.railPoints.add(rp2);
+		scene.connections.add(rc);
+		Train train = new Train(new RailLocation(.1, rc));
+		train.addSection(TrainSection.Wagon::new);
+		train.addSection(TrainSection.Wagon::new);
+		scene.trains.add(train);
+		scene.trainStops.add(new TrainStop(new RailLocation(.9, rc)));
+		scene.railSignals.add(new RailSignal(new RailLocation(.5, rc)));
+		
+		Tab.setScene(scene);
+		Tool.setScene(scene);
+		
+		setCurrentSave(null);
+		updateFrameTitle();
+		
+		frame.repaint();
+		
+	}
+	
 	public static void save() {
 		
 		if (currentSave == null) {
@@ -374,7 +406,6 @@ public final class Driver {
 			scene = Scene.load(Driver.currentSave);
 			Tool.setScene(scene);
 			Tab.setScene(scene);
-			updateFrameTitle();
 			frame.repaint();
 			
 		}

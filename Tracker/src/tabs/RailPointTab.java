@@ -440,5 +440,11 @@ public final class RailPointTab extends ComboBoxTab<RailPoint> implements MouseL
 		return filler;
 		
 	}
+
+	@Override
+	public void onModeSwitched() {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }

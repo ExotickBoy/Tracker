@@ -8,13 +8,17 @@ import static utils.BezierCurves.cubicBezier;
 import static utils.BezierCurves.cubicBezierArcLength;
 import static utils.BezierCurves.cubicBezierDerivative;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -38,12 +42,17 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 	public RailPoint point1;
 	public RailPoint point2;
 	
+	boolean p1Positive = false;
+	boolean p2Positive = false;
+	
 	public Vector2 p0;
 	public Vector2 p1;
 	public Vector2 p2;
 	public Vector2 p3;
 	
 	public double length;
+	
+	public int dank;
 	
 	static {
 		
@@ -118,23 +127,6 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 				double dx = cubicBezierDerivative(p0.x, p1.x, p2.x, p3.x, t);
 				double dy = cubicBezierDerivative(p0.y, p1.y, p2.y, p3.y, t);
 				
-				/*
-				 * 
-				 * double a1x = p2.x - 2 * p1.x + p0.x; double b1x = p3.x - 2 * p2.x + p1.x;
-				 * 
-				 * double ax = 6 * a1x; double bx = 6 * a1x + 6 * b1x;
-				 * 
-				 * double xRoot = RootFinder.linearRoot(ax, bx); double xMax = cubicBezierDerivative(p0.x, p1.x, p2.x, p3.x, xRoot);
-				 * 
-				 * double a1y = p2.y - 2 * p1.y + p0.y; double b1y = p3.y - 2 * p2.y + p1.y;
-				 * 
-				 * double ay = 6 * a1y; double by = 6 * a1y + 6 * b1y;
-				 * 
-				 * double yRoot = RootFinder.linearRoot(ay, by); double yMax = cubicBezierDerivative(p0.y, p1.y, p2.y, p3.y, yRoot);
-				 * 
-				 * double d = 1.85* (dx + dy) / (abs(xMax) + abs(yMax)); t /= d;
-				 */
-				
 				double x = cubicBezier(p0.x, p1.x, p2.x, p3.x, t);
 				double y = cubicBezier(p0.y, p1.y, p2.y, p3.y, t);
 				
@@ -145,6 +137,25 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 				g.transform(affineTransform);
 				
 				g.drawImage(railImage, (int) (-TRACK_PEACE_SIZE / 2), (int) (-TRACK_PEACE_SIZE / 2), (int) (TRACK_PEACE_SIZE), (int) (TRACK_PEACE_SIZE), null);
+				
+				if (dank != 0) {
+					
+					if (dank == 3) {
+						
+						g.setColor(Color.GREEN);
+						
+					} else if (dank == 1) {
+						
+						g.setColor(Color.RED);
+						
+					} else if (dank == 2) {
+						
+						g.setColor(Color.YELLOW);
+						
+					}
+					g.fill(new Rectangle(-10, -10, 20, 20));
+					
+				}
 				
 				g.setTransform(innitialTransform);
 				
@@ -170,7 +181,7 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 		
 		Driver.scene.trains.stream().filter((train) -> {
 			
-			return train.location.connection == this;
+			return train.getLocation().connection == this;
 			
 		}).forEach(Train::recalculateSections);
 		
@@ -179,6 +190,12 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 	public void updateLength() {
 		
 		length = cubicBezierArcLength(p0, p1, p2, p3, ARC_LENGTH_CALCULATION_RESOLUTION);
+		
+	}
+	
+	public double getLength() {
+		
+		return length;
 		
 	}
 	
@@ -195,10 +212,33 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 		Vector2 p1b = Vector2.add(p0, Vector2.rotate(new Vector2(Vector2.magnitude(Vector2.subtract(p3, centre)) * BEZIER_ANCHOR_WEIGHT, 0), point1.getDirection() + PI));
 		Vector2 p2b = Vector2.add(p3, Vector2.rotate(new Vector2(Vector2.magnitude(Vector2.subtract(p0, centre)) * BEZIER_ANCHOR_WEIGHT, 0), point2.getDirection() + PI));
 		
-		p1 = Vector2.distance(p1a, centre) > Vector2.distance(p1b, centre) ? p1b : p1a;
-		p2 = Vector2.distance(p2a, centre) < Vector2.distance(p2b, centre) ? p2a : p2b;
+		p1Positive = Vector2.distance(p1a, centre) > Vector2.distance(p1b, centre);
+		p2Positive = Vector2.distance(p2a, centre) > Vector2.distance(p2b, centre);
+		
+		p1 = p1Positive ? p1b : p1a;
+		p2 = p2Positive ? p2b : p2a;
 		
 		updateLength();
+		
+	}
+	
+	public ArrayList<RailConnection> getConnections() {
+		
+		return Driver.scene.connections.stream().filter((connection) -> connection.has(point1) ^ connection.has(point2)).collect(Collectors.toCollection(ArrayList::new));
+		
+	}
+	
+	public boolean isSameDirection(RailConnection other) {
+		
+		return point1 != other.point1 && point2 != other.point2;
+		
+	}
+	
+	public boolean canPass(RailConnection other) {
+		
+		RailPoint shared = other.has(point1) ? point1 : point2;
+		
+		return (shared == point1 ? p1Positive : p2Positive) != (shared == other.point1 ? other.p1Positive : other.p2Positive);
 		
 	}
 	

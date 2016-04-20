@@ -14,7 +14,7 @@ import javax.swing.JPanel;
 import core.Driver;
 import core.Tab;
 
-public abstract class ComboBoxTab<T> extends Tab implements ActionListener{
+public abstract class ComboBoxTab<T> extends Tab implements ActionListener {
 	
 	private static final long serialVersionUID = 1L;
 	

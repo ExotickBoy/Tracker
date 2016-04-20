@@ -46,5 +46,11 @@ public class WorldTab extends Tab {
 	
 	@Override
 	public void onSwitchedAway() {}
+
+	@Override
+	public void onModeSwitched() {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }

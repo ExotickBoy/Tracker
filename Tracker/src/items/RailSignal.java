@@ -44,6 +44,7 @@ public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
 	private static HashMap<Integer, BufferedImage> colorToImage = new HashMap<>();
 	
 	RailLocation location;
+	private boolean willDrawCollider;
 	boolean decided;
 	int color;
 	
@@ -101,10 +102,8 @@ public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
 		
 		g.setTransform(innitialTransform);
 		
-		getCollider().draw(g);
-		
 	}
-
+	
 	@Override
 	public Collider getCollider() {
 		
@@ -129,9 +128,23 @@ public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
 		return new Collider(triangles);
 		
 	}
-
+	
 	@Override
 	public boolean willDrawCollider() {
+		
+		return willDrawCollider;
+		
+	}
+	
+	@Override
+	public void setDrawCollider(boolean willDrawCollider) {
+		
+		this.willDrawCollider = willDrawCollider;
+		
+	}
+	
+	@Override
+	public boolean isByRail() {
 		
 		return true;
 		

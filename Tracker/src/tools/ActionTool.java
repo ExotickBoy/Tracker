@@ -68,6 +68,20 @@ public abstract class ActionTool extends Tool {
 	}
 	
 	@Override
+	public final boolean willFinaliseOnRealeaseLeftMouse() {
+		
+		return false;
+		
+	}
+	
+	@Override
+	public boolean willAbortOnRealeaseRightMouse() {
+		
+		return false;
+		
+	}
+	
+	@Override
 	public final void takeMessage(String input) {}
 	
 	@Override

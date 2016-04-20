@@ -4,6 +4,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import core.Driver;
 import items.RailLocation;
 import items.Train;
 import items.TrainSection;
+import items.TrainStop;
 import utils.Units;
 
 public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
@@ -34,6 +36,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 	
 	private static final String TRAIN_STATS_LABEL = "Train Stats";
 	private static final String TRAIN_SECTIONS_LABEL = "Train Sections";
+	private static final String TRAIN_STOPS_LABEL = "Train Stops";
 	
 	private static final String SPEED_LABEL = "Speed:";
 	private static final String MASS_LABEL = "Mass:";
@@ -49,21 +52,35 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 	private static final String ADD_BUTTON_TEXT = "Add";
 	private static final String REMOVE_BUTTON_TEXT = "Remove";
 	
-	private Train active;
+	private static final String PAUSE_BUTTON_TEXT = "❚❚";
+	private static final String RUN_BUTTON_TEXT = "►";
 	
-	private JList<TrainSection> trainSectionList;
-	DefaultListModel<TrainSection> sectionListModel;
+	private Train active;
 	
 	private JLabel speedDataLabel;
 	private JLabel massDataLabel;
 	private JLabel acceleratingForceDataLabel;
 	private JLabel brakingForceDataLabel;
 	
-	private JButton moveUpButton;
-	private JButton moveDownButton;
-	private JButton addButton;
-	private JButton removeButton;
+	private JList<TrainSection> trainSectionList;
+	private DefaultListModel<TrainSection> sectionListModel;
+	
+	private JButton moveSectionUpButton;
+	private JButton moveSectionDownButton;
+	private JButton addSectionButton;
+	private JButton removeSectionButton;
 	private JComboBox<String> sectionSelecterComboBox;
+	
+	private JList<TrainStop> trainStopList;
+	private DefaultListModel<TrainStop> stopListModel;
+	
+	private JButton moveStopUpButton;
+	private JButton moveStopDownButton;
+	private JButton addStopButton;
+	private JButton removeStopButton;
+	private JComboBox<TrainStop> stopSelecterComboBox;
+	
+	private JButton runTrainButton;
 	
 	public TrainTab() {
 		
@@ -96,7 +113,9 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 				
 				getComboBox().setEditable(true);
 				active = (Train) getComboBox().getSelectedItem();
-				updatePanel();
+				
+				updateLists();
+				update();
 				
 				Driver.frame.repaint();
 				
@@ -104,7 +123,21 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 			
 		}
 		
-		updatePanel();
+		update();
+		
+	}
+	
+	private void updateLists() {
+		
+		if (active != null) {
+			
+			sectionListModel.clear();
+			active.getSections().forEach(sectionListModel::addElement);
+			
+			stopListModel.clear();
+			active.getRout().forEach(stopListModel::addElement);
+			
+		}
 		
 	}
 	
@@ -121,6 +154,17 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		JPanel view = new JPanel();
 		view.setLayout(new GridBagLayout());
 		view.setBorder(BorderFactory.createEmptyBorder(0, Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS));
+		
+		runTrainButton = new JButton();
+		runTrainButton.setText(RUN_BUTTON_TEXT);
+		runTrainButton.setEnabled(false);
+		runTrainButton.addActionListener((e) -> {
+			
+			active.setRunning(!active.isRunning());
+			
+			runTrainButton.setText(active.isRunning() ? PAUSE_BUTTON_TEXT : RUN_BUTTON_TEXT);
+			
+		});
 		
 		speedDataLabel = new JLabel();
 		speedDataLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -143,24 +187,24 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		trainSectionList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		trainSectionList.addListSelectionListener((ListSelectionEvent e) -> {
 			
-			moveUpButton.setEnabled(trainSectionList.getSelectedIndex() != 0 && trainSectionList.getModel().getSize() != 0);
-			moveDownButton.setEnabled(trainSectionList.getSelectedIndex() != sectionListModel.getSize() - 1 && trainSectionList.getModel().getSize() != 0);
-			removeButton.setEnabled(trainSectionList.getSelectedIndex() != -1);
+			moveSectionUpButton.setEnabled(trainSectionList.getSelectedIndex() != 0 && trainSectionList.getModel().getSize() != 0);
+			moveSectionDownButton.setEnabled(trainSectionList.getSelectedIndex() != sectionListModel.getSize() - 1 && trainSectionList.getModel().getSize() != 0);
+			removeSectionButton.setEnabled(trainSectionList.getSelectedIndex() != -1);
 			
 		});
 		
-		moveUpButton = new JButton();
-		moveUpButton.setText(UP_BUTTON_TEXT);
-		moveUpButton.setEnabled(false);
-		moveUpButton.addActionListener(e -> {
+		moveSectionUpButton = new JButton();
+		moveSectionUpButton.setText(UP_BUTTON_TEXT);
+		moveSectionUpButton.setEnabled(false);
+		moveSectionUpButton.addActionListener(e -> {
 			
 			int index = trainSectionList.getSelectedIndex();
 			TrainSection toMove = sectionListModel.getElementAt(index);
 			sectionListModel.removeElementAt(index);
 			sectionListModel.add(index - 1, toMove);
 			
-			active.sections.remove(index);
-			active.sections.add(index - 1, toMove);
+			active.getSections().remove(index);
+			active.getSections().add(index - 1, toMove);
 			
 			trainSectionList.setSelectedIndex(index - 1);
 			
@@ -169,18 +213,18 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 			
 		});
 		
-		moveDownButton = new JButton();
-		moveDownButton.setText(DOWN_BUTTON_TEXT);
-		moveDownButton.setEnabled(false);
-		moveDownButton.addActionListener(e -> {
+		moveSectionDownButton = new JButton();
+		moveSectionDownButton.setText(DOWN_BUTTON_TEXT);
+		moveSectionDownButton.setEnabled(false);
+		moveSectionDownButton.addActionListener(e -> {
 			
 			int index = trainSectionList.getSelectedIndex();
 			TrainSection toMove = sectionListModel.getElementAt(index);
 			sectionListModel.removeElementAt(index);
 			sectionListModel.add(index + 1, toMove);
 			
-			active.sections.remove(index);
-			active.sections.add(index + 1, toMove);
+			active.getSections().remove(index);
+			active.getSections().add(index + 1, toMove);
 			
 			trainSectionList.setSelectedIndex(index + 1);
 			
@@ -195,29 +239,140 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		sectionSelecterComboBox = new JComboBox<>(stringToSectionMap.keySet().stream().toArray(size -> new String[size]));
 		
-		addButton = new JButton();
-		addButton.setText(ADD_BUTTON_TEXT);
-		addButton.setEnabled(false);
-		addButton.addActionListener(e -> {
+		addSectionButton = new JButton();
+		addSectionButton.setText(ADD_BUTTON_TEXT);
+		addSectionButton.setEnabled(false);
+		addSectionButton.addActionListener(e -> {
 			
 			active.addSection(stringToSectionMap.get(sectionSelecterComboBox.getSelectedItem()));
-			updatePanel();
+			updateLists();
+			update();
 			Driver.frame.repaint();
 			
 		});
 		
-		removeButton = new JButton();
-		removeButton.setText(REMOVE_BUTTON_TEXT);
-		removeButton.setEnabled(false);
-		removeButton.addActionListener(e -> {
+		removeSectionButton = new JButton();
+		removeSectionButton.setText(REMOVE_BUTTON_TEXT);
+		removeSectionButton.setEnabled(false);
+		removeSectionButton.addActionListener(e -> {
 			
 			int index = trainSectionList.getSelectedIndex();
 			active.removeSection(index);
-			updatePanel();
+			updateLists();
+			update();
 			trainSectionList.setSelectedIndex(index);
 			Driver.frame.repaint();
 			
 		});
+		
+		// stops
+		
+		stopListModel = new DefaultListModel<>();
+		trainStopList = new JList<>(stopListModel);
+		trainStopList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		trainStopList.addListSelectionListener((ListSelectionEvent e) -> {
+			
+			moveStopUpButton.setEnabled(trainStopList.getSelectedIndex() != 0 && trainStopList.getModel().getSize() != 0);
+			moveStopDownButton.setEnabled(trainStopList.getSelectedIndex() != stopListModel.getSize() - 1 && trainStopList.getModel().getSize() != 0);
+			removeStopButton.setEnabled(trainStopList.getSelectedIndex() != -1);
+			
+		});
+		
+		moveStopUpButton = new JButton();
+		moveStopUpButton.setText(UP_BUTTON_TEXT);
+		moveStopUpButton.setEnabled(false);
+		moveStopUpButton.addActionListener(e -> {
+			
+			int index = trainStopList.getSelectedIndex();
+			TrainStop toMove = stopListModel.getElementAt(index);
+			stopListModel.removeElementAt(index);
+			stopListModel.add(index - 1, toMove);
+			
+			active.removeDestination(index);
+			active.addDestination(index - 1, toMove);
+			
+			trainStopList.setSelectedIndex(index - 1);
+			
+			Driver.frame.repaint();
+			
+		});
+		
+		moveStopDownButton = new JButton();
+		moveStopDownButton.setText(DOWN_BUTTON_TEXT);
+		moveStopDownButton.setEnabled(false);
+		moveStopDownButton.addActionListener(e -> {
+			
+			int index = trainStopList.getSelectedIndex();
+			TrainStop toMove = stopListModel.getElementAt(index);
+			stopListModel.removeElementAt(index);
+			stopListModel.add(index + 1, toMove);
+			
+			active.removeDestination(index);
+			active.addDestination(index + 1, toMove);
+			
+			trainStopList.setSelectedIndex(index + 1);
+			
+			Driver.frame.repaint();
+			
+		});
+		
+		stopSelecterComboBox = new JComboBox<>(scene.trainStops.stream().toArray(size -> new TrainStop[size]));
+		stopSelecterComboBox.setEditable(false);
+		stopSelecterComboBox.addActionListener(new ActionListener() {
+			
+			TrainStop last;
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
+				if (e.getActionCommand().equals("comboBoxEdited")) {
+					
+					last.setName(stopSelecterComboBox.getSelectedItem().toString());
+					Driver.viewPanel.grabFocus();
+					
+				} else { // comboBoxChanged
+					
+					if (getComboBox().getSelectedIndex() != -1) {
+						
+						stopSelecterComboBox.setEditable(true);
+						last = scene.trainStops.get(getComboBox().getSelectedIndex());
+						update();
+						
+						Driver.frame.repaint();
+						
+					}
+					
+				}
+				
+			}
+		});
+		
+		addStopButton = new JButton();
+		addStopButton.setText(ADD_BUTTON_TEXT);
+		addStopButton.setEnabled(false);
+		addStopButton.addActionListener(e -> {
+			
+			active.addDestination(scene.trainStops.get(stopSelecterComboBox.getSelectedIndex()));
+			updateLists();
+			update();
+			Driver.frame.repaint();
+			
+		});
+		
+		removeStopButton = new JButton();
+		removeStopButton.setText(REMOVE_BUTTON_TEXT);
+		removeStopButton.setEnabled(false);
+		removeStopButton.addActionListener(e -> {
+			
+			int index = trainStopList.getSelectedIndex();
+			active.removeDestination(index);
+			updateLists();
+			update();
+			trainStopList.setSelectedIndex(index);
+			Driver.frame.repaint();
+			
+		});
+		//
 		
 		GridBagConstraints c = new GridBagConstraints();
 		
@@ -227,7 +382,16 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		c.gridheight = 1;
 		c.weightx = 0;
 		c.weighty = 0;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.fill = GridBagConstraints.BOTH;
+		c.insets = new Insets(0, 0, Driver.LAYOUT_MARGINS, 0);
+		view.add(runTrainButton, c);
+		
+		c.gridx = 0;
+		c.gridy++;
+		c.gridwidth = 2;
+		c.gridheight = 1;
+		c.weightx = 0;
+		c.weighty = 0;
 		c.insets = new Insets(0, 0, Driver.LAYOUT_MARGINS, 0);
 		view.add(new JLabel(TRAIN_STATS_LABEL, SwingConstants.CENTER), c);
 		
@@ -324,7 +488,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		c.weightx = 1;
 		c.weighty = 0;
 		c.insets = new Insets(Driver.LAYOUT_MARGINS, 0, 0, Driver.LAYOUT_MARGINS / 2);
-		view.add(moveUpButton, c);
+		view.add(moveSectionUpButton, c);
 		
 		c.gridx = 1;
 		c.gridwidth = 1;
@@ -332,7 +496,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		c.weightx = 1;
 		c.weighty = 0;
 		c.insets = new Insets(Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS / 2, 0, 0);
-		view.add(moveDownButton, c);
+		view.add(moveSectionDownButton, c);
 		
 		c.gridx = 0;
 		c.gridy++;
@@ -341,7 +505,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		c.weightx = 1;
 		c.weighty = 0;
 		c.insets = new Insets(Driver.LAYOUT_MARGINS, 0, 0, Driver.LAYOUT_MARGINS / 2);
-		view.add(addButton, c);
+		view.add(addSectionButton, c);
 		
 		c.gridx = 1;
 		c.gridwidth = 1;
@@ -349,7 +513,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		c.weightx = 1;
 		c.weighty = 0;
 		c.insets = new Insets(Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS / 2, 0, 0);
-		view.add(removeButton, c);
+		view.add(removeSectionButton, c);
 		
 		c.gridx = 0;
 		c.gridy++;
@@ -359,6 +523,69 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		c.weighty = 0;
 		c.insets = new Insets(Driver.LAYOUT_MARGINS, 0, 0, 0);
 		view.add(sectionSelecterComboBox, c);
+		
+		// stops
+		
+		c.gridx = 0;
+		c.gridy++;
+		c.gridwidth = 2;
+		c.gridheight = 1;
+		c.weightx = 1;
+		c.weighty = 0;
+		c.insets = new Insets(Driver.LAYOUT_MARGINS, 0, 0, 0);
+		view.add(new JLabel(TRAIN_STOPS_LABEL, SwingConstants.CENTER), c);
+		
+		c.gridx = 0;
+		c.gridy++;
+		c.gridwidth = 2;
+		c.gridheight = 1;
+		c.weightx = 1;
+		c.weighty = 1;
+		c.insets = new Insets(0, 0, 0, 0);
+		view.add(new JScrollPane(trainStopList), c);
+		
+		c.gridx = 0;
+		c.gridy++;
+		c.gridwidth = 1;
+		c.gridheight = 1;
+		c.weightx = 1;
+		c.weighty = 0;
+		c.insets = new Insets(Driver.LAYOUT_MARGINS, 0, 0, Driver.LAYOUT_MARGINS / 2);
+		view.add(moveStopUpButton, c);
+		
+		c.gridx = 1;
+		c.gridwidth = 1;
+		c.gridheight = 1;
+		c.weightx = 1;
+		c.weighty = 0;
+		c.insets = new Insets(Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS / 2, 0, 0);
+		view.add(moveStopDownButton, c);
+		
+		c.gridx = 0;
+		c.gridy++;
+		c.gridwidth = 1;
+		c.gridheight = 1;
+		c.weightx = 1;
+		c.weighty = 0;
+		c.insets = new Insets(Driver.LAYOUT_MARGINS, 0, 0, Driver.LAYOUT_MARGINS / 2);
+		view.add(addStopButton, c);
+		
+		c.gridx = 1;
+		c.gridwidth = 1;
+		c.gridheight = 1;
+		c.weightx = 1;
+		c.weighty = 0;
+		c.insets = new Insets(Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS / 2, 0, 0);
+		view.add(removeStopButton, c);
+		
+		c.gridx = 0;
+		c.gridy++;
+		c.gridwidth = 2;
+		c.gridheight = 1;
+		c.weightx = 1;
+		c.weighty = 0;
+		c.insets = new Insets(Driver.LAYOUT_MARGINS, 0, 0, 0);
+		view.add(stopSelecterComboBox, c);
 		
 		// sectionSelecterComboBox
 		
@@ -380,7 +607,10 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 	public void onSwitchedTo() {
 		
 		setComboBoxModel(new DefaultComboBoxModel<Train>(getScene().trains.stream().toArray(size -> new Train[size])));
-		updatePanel();
+		stopSelecterComboBox.setModel(new DefaultComboBoxModel<>(scene.trainStops.stream().toArray(size -> new TrainStop[size])));
+		
+		updateLists();
+		update();
 		
 	}
 	
@@ -391,7 +621,12 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 	public void onToolActivate() {}
 	
 	@Override
-	public void onToolFinalise() {}
+	public void onToolFinalise() {
+		
+		setComboBoxModel(new DefaultComboBoxModel<Train>(getScene().trains.stream().toArray(size -> new Train[size])));
+		stopSelecterComboBox.setModel(new DefaultComboBoxModel<>(scene.trainStops.stream().toArray(size -> new TrainStop[size])));
+		
+	}
 	
 	@Override
 	public void onToolAbort() {}
@@ -402,50 +637,48 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 	@Override
 	public void onRedo() {}
 	
-	private void updatePanel() {
+	public void update() {
 		
 		if (active != null) {
 			
 			getLabel().setText(NAME_PREFIX + active.getName());
 			
-			sectionListModel.clear();
-			active.sections.forEach(sectionListModel::addElement);
+			runTrainButton.setEnabled(true);
+			runTrainButton.setText(active.isRunning() ? PAUSE_BUTTON_TEXT : RUN_BUTTON_TEXT);
 			
-			addButton.setEnabled(true);
+			addSectionButton.setEnabled(true);
+			addStopButton.setEnabled(true);
 			sectionSelecterComboBox.setEnabled(true);
+			stopSelecterComboBox.setEnabled(true);
 			
-			speedDataLabel.setText(Units.METRE_PER_SECOND.formatShortUnit(active.getSpeed()));
-			speedDataLabel.setToolTipText(Units.METRE_PER_SECOND.formatLongUnit(active.getSpeed()));
-			
-			massDataLabel.setText(Units.KILO_GRAM.formatShortUnit(active.getMass()));
-			massDataLabel.setToolTipText(Units.KILO_GRAM.formatLongUnit(active.getMass()));
-			
-			acceleratingForceDataLabel.setText(Units.METRE_PER_SECOND_PER_SECOND.formatShortUnit(active.getMaxAcceleration()));
-			acceleratingForceDataLabel.setToolTipText(Units.METRE_PER_SECOND_PER_SECOND.formatLongUnit(active.getMaxAcceleration()));
-			
-			brakingForceDataLabel.setText(Units.METRE_PER_SECOND_PER_SECOND.formatShortUnit(active.getMaxDeceleration()));
-			brakingForceDataLabel.setToolTipText(Units.METRE_PER_SECOND_PER_SECOND.formatLongUnit(active.getMaxDeceleration()));
+			updateLabel(speedDataLabel, Units.METRE_PER_SECOND, active.getSpeed());
+			updateLabel(massDataLabel, Units.KILO_GRAM, active.getMass());
+			updateLabel(acceleratingForceDataLabel, Units.METRE_PER_SECOND_PER_SECOND, active.getMaxAcceleration());
+			updateLabel(brakingForceDataLabel, Units.METRE_PER_SECOND_PER_SECOND, active.getMaxDeceleration());
 			
 		} else {
 			
 			getLabel().setText(NAME_PREFIX);
 			
 			sectionListModel.clear();
+			stopListModel.clear();
+			
 			sectionSelecterComboBox.setEnabled(false);
+			stopSelecterComboBox.setEnabled(false);
 			
-			speedDataLabel.setText(Units.METRE_PER_SECOND.formatShortUnit(0));
-			speedDataLabel.setToolTipText("");
-			
-			massDataLabel.setText(Units.KILO_GRAM.formatShortUnit(0));
-			massDataLabel.setToolTipText("");
-			
-			acceleratingForceDataLabel.setText(Units.METRE_PER_SECOND_PER_SECOND.formatShortUnit(0));
-			acceleratingForceDataLabel.setToolTipText("");
-			
-			brakingForceDataLabel.setText(Units.METRE_PER_SECOND_PER_SECOND.formatShortUnit(0));
-			brakingForceDataLabel.setToolTipText("");
+			updateLabel(speedDataLabel, Units.METRE_PER_SECOND, 0);
+			updateLabel(massDataLabel, Units.KILO_GRAM, 0);
+			updateLabel(acceleratingForceDataLabel, Units.METRE_PER_SECOND_PER_SECOND, 0);
+			updateLabel(brakingForceDataLabel, Units.METRE_PER_SECOND_PER_SECOND, 0);
 			
 		}
+		
+	}
+	
+	private void updateLabel(JLabel label, Units unit, double amount) {
+		
+		label.setText(unit.formatShortUnit(amount));
+		label.setToolTipText(unit.formatLongUnit(amount));
 		
 	}
 	
@@ -467,5 +700,8 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 	
 	@Override
 	public void mouseReleased(MouseEvent arg0) {}
+	
+	@Override
+	public void onModeSwitched() {}
 	
 }

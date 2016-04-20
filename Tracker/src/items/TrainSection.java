@@ -21,7 +21,7 @@ import utils.Collider.Triangle;
 
 public abstract class TrainSection implements Serializable, Drawable, OnRail, Selectable {
 	
-	private static final long serialVersionUID = 0L;
+	private static final long serialVersionUID = 1L;
 	
 	public static final class Locomotive extends TrainSection {
 		
@@ -31,7 +31,7 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail, Se
 			
 			super(location);
 			
-			setTexture(LOCOMOTIVE_TEXTURE);
+			setTexture(LOCOMOTIVE_TEXTURE_ID);
 			setName(LOCOMOTIVE_NAME);
 			
 		}
@@ -46,7 +46,7 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail, Se
 			
 			super(location);
 			
-			setTexture(WAGON_TEXTURE);
+			setTexture(WAGON_TEXTURE_ID);
 			setName(WAGON_NAME);
 			setMaxAcceleratingForce(WAGON_MAX_ACCELERATING_FORCE);
 			
@@ -59,20 +59,24 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail, Se
 	
 	public static final String LOCOMOTIVE_NAME = "Locomotive";
 	public static final BufferedImage LOCOMOTIVE_TEXTURE = getTexture("src/locomotive.png");
+	public static final int LOCOMOTIVE_TEXTURE_ID = 0;
 	
 	public static final String WAGON_NAME = "Wagon";
 	public static final double WAGON_MAX_ACCELERATING_FORCE = 0;
 	public static final BufferedImage WAGON_TEXTURE = getTexture("src/wagon.png");
+	public static final int WAGON_TEXTURE_ID = 1;
 	
 	public static final double DEFAULT_MASS = 40000;
 	public static final double DEFAULT_MAX_ACCELERATING_FORCE = 240000;
 	public static final double DEFAULT_MAX_BRAKINGFORCE = 80000;
 	
+	public static final BufferedImage[] TEXTURES = new BufferedImage[] { LOCOMOTIVE_TEXTURE, WAGON_TEXTURE };
+	
 	double mass = DEFAULT_MASS; // kg
 	double maxAcceleratingForce = DEFAULT_MAX_ACCELERATING_FORCE; // N
 	double maxBrakingForce = DEFAULT_MAX_BRAKINGFORCE; // N
 	
-	transient BufferedImage texture;
+	int texture;
 	RailLocation location;
 	String name;
 	
@@ -90,13 +94,7 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail, Se
 		
 	}
 	
-	protected void setTexture(String path) {
-		
-		setTexture(getTexture(path));
-		
-	}
-	
-	protected void setTexture(BufferedImage texture) {
+	protected void setTexture(int texture) {
 		
 		this.texture = texture;
 		
@@ -132,7 +130,7 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail, Se
 		
 	}
 	
-	public BufferedImage getTexture() {
+	public int getTexture() {
 		
 		return texture;
 		
@@ -156,7 +154,7 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail, Se
 		AffineTransform innitialTransform = g.getTransform();
 		g.transform(affineTransform);
 		
-		g.drawImage(getTexture(), -TRAIN_WIDTH / 2, -TRAIN_LENGTH / 2, TRAIN_WIDTH, TRAIN_LENGTH, null);
+		g.drawImage(TEXTURES[texture], -TRAIN_WIDTH / 2, -TRAIN_LENGTH / 2, TRAIN_WIDTH, TRAIN_LENGTH, null);
 		
 		g.setTransform(innitialTransform);
 		
@@ -226,7 +224,21 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail, Se
 	@Override
 	public boolean willDrawCollider() {
 		
-		return true;
+		return train.willDrawCollider();
+		
+	}
+	
+	@Override
+	public void setDrawCollider(boolean willDrawCollider) {
+		
+		train.setDrawCollider(willDrawCollider);
+		
+	}
+	
+	@Override
+	public boolean isByRail() {
+		
+		return false;
 		
 	}
 	

@@ -5,7 +5,7 @@ import interfaces.Drawable;
 public abstract class Snap<T> implements Drawable {
 	
 	private T destincation;
-	private double distance;
+	private double distance = Double.MAX_VALUE;
 	
 	public Snap() {
 	
@@ -45,7 +45,7 @@ public abstract class Snap<T> implements Drawable {
 	
 	public final boolean isValid() {
 		
-		return true;
+		return destincation != null;
 		
 	}
 	

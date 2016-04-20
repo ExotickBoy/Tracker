@@ -209,6 +209,16 @@ public final class ViewPanel extends JPanel implements KeyListener, MouseWheelLi
 			Driver.tool.mouseReleased(e);
 			Driver.frame.repaint();
 			
+			if (Driver.tool != null && e.getButton() == 1 && Driver.tool.willFinaliseOnRealeaseLeftMouse()) {
+				
+				Driver.finaliseTool();
+				
+			} else if (Driver.tool != null &&  e.getButton() == 3 && Driver.tool.willAbortOnRealeaseRightMouse()) {
+				
+				Driver.abortTool();
+				
+			}
+			
 		}
 		
 	}
@@ -284,8 +294,6 @@ public final class ViewPanel extends JPanel implements KeyListener, MouseWheelLi
 			Driver.frame.repaint();
 			
 		}
-		
-		Driver.finaliseTool();
 		
 	}
 	

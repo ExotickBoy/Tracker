@@ -55,7 +55,7 @@ public class Collider implements Drawable {
 		
 		private boolean isInside(Vector2 otherPoint) {
 			
-			return pointPastLine(point1, point2, otherPoint) < 0 && pointPastLine(point2, point2, otherPoint) < 0 && pointPastLine(point2, point1, otherPoint) < 0;
+			return pointPastLine(point1, point2, otherPoint) > 0 && pointPastLine(point2, point3, otherPoint) > 0 && pointPastLine(point3, point1, otherPoint) > 0;
 			
 		}
 		

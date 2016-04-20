@@ -392,19 +392,11 @@ public final class GrabTool extends Tool {
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		
-		if (e.getButton() == 3) {
-			
-			abort();
-			
-		} else if (e.getButton() == 2) {
+		if (e.getButton() == 2) {
 			
 			middleMouse(e);
 			
-		} else {
-			
-			finalise();
-			
-		}
+		} 
 		
 	}
 	
@@ -648,7 +640,7 @@ public final class GrabTool extends Tool {
 			
 		}).filter(Objects::nonNull).forEach(snapBuilder::accept);
 		
-		return snapBuilder.build().filter(GrabTool::withinDistance).min(Snap::sortByDistance).orElse(null);
+		return snapBuilder.build().filter(GrabTool::withinDistance).filter(Snap::isValid).min(Snap::sortByDistance).orElse(null);
 		
 	}
 	

@@ -128,7 +128,7 @@ public final class Vector2 implements Serializable {
 		return Math.atan2(a.x, a.y);
 		
 	}
-	
+		
 	@Override
 	public String toString() {
 		

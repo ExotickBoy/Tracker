@@ -9,7 +9,7 @@ import core.Driver;
 import core.Edit;
 import core.Tool;
 
-public final class ScaleTool extends Tool  {// TODO Auto-generated class stub
+public final class ScaleTool extends Tool {// TODO Auto-generated class stub
 	
 	private static final String TOOL_NAME = "Scale";
 	private static final KeyStroke HOT_KEY = KeyStroke.getKeyStroke(KeyEvent.VK_S, 0);
@@ -31,7 +31,7 @@ public final class ScaleTool extends Tool  {// TODO Auto-generated class stub
 	}
 	
 	@Override
-	public void onActivate() {	}
+	public void onActivate() {}
 	
 	@Override
 	public Edit onFinalise() {
@@ -58,5 +58,6 @@ public final class ScaleTool extends Tool  {// TODO Auto-generated class stub
 	
 	@Override
 	public void takeMessage(String input) {}
+	
 	
 }

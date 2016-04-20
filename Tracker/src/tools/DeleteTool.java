@@ -1,15 +1,13 @@
 package tools;
 
-import java.awt.Graphics2D;
 import java.util.ArrayList;
 
 import core.Driver;
 import core.Edit;
-import core.Tool;
 import items.RailConnection;
 import items.RailPoint;
 
-public final class DeleteTool extends Tool {
+public final class DeleteTool extends ActionTool {
 	
 	private static final String TOOL_NAME = "Delete";
 	
@@ -30,8 +28,7 @@ public final class DeleteTool extends Tool {
 		
 	}
 	
-	@Override
-	public void onActivate() {
+	public Edit action() {
 		
 		brokenConnections = new ArrayList<>();
 		
@@ -49,14 +46,6 @@ public final class DeleteTool extends Tool {
 			return will;
 			
 		});
-		
-		finalise();
-		Driver.selectTool(Driver.GRAB_TOOL);
-		
-	}
-	
-	@Override
-	public Edit onFinalise() {
 		
 		return new Edit() {
 			
@@ -90,24 +79,5 @@ public final class DeleteTool extends Tool {
 		};
 		
 	}
-	
-	@Override
-	public void onAbort() {}
-	
-	@Override
-	public String getMessage() {
 		
-		return "";
-		
-	}
-	
-	@Override
-	public void drawOver(Graphics2D g) {}
-	
-	@Override
-	public void drawUnder(Graphics2D g) {}
-	
-	@Override
-	public void takeMessage(String input) {}
-	
 }

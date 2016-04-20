@@ -27,6 +27,20 @@ public final class RailLocation implements Serializable {
 		
 	}
 	
+	public RailLocation(boolean forward, RailConnection connection) {
+		
+		this(0, connection, forward);
+		
+	}
+	
+	public RailLocation(RailLocation clone) {
+		
+		this.t = clone.t;
+		this.connection = clone.connection;
+		this.forward = clone.forward;
+		
+	}
+	
 	public void setForward(boolean forward) {
 		
 		this.forward = forward;
@@ -36,6 +50,24 @@ public final class RailLocation implements Serializable {
 	public boolean isForward() {
 		
 		return forward;
+		
+	}
+	
+	public void toggleForward() {
+		
+		this.forward = !forward;
+		
+	}
+	
+	public double getT() {
+		
+		return t;
+		
+	}
+	
+	public RailConnection getConnection() {
+		
+		return connection;
 		
 	}
 	
