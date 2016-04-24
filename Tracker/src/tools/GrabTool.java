@@ -387,16 +387,7 @@ public final class GrabTool extends Tool {
 			
 		});
 		
-		scene.connections.stream().filter((connection) -> {
-			
-			return scene.railPoints.stream().anyMatch((railPoint) -> {
-				
-				return connection.has(railPoint);
-				
-			});
-			
-		}).forEach(RailConnection::update);
-		;
+		updateConnections();
 		
 	}
 	
@@ -471,11 +462,7 @@ public final class GrabTool extends Tool {
 						
 					});
 					
-					scene.connections.stream().filter((connection) -> {
-						
-						return after.keySet().stream().anyMatch(connection::has);
-						
-					}).forEach(RailConnection::update);
+					updateConnections();
 					
 				}
 				
@@ -488,11 +475,7 @@ public final class GrabTool extends Tool {
 						
 					});
 					
-					scene.connections.stream().filter((connection) -> {
-						
-						return before.keySet().stream().anyMatch(connection::has);
-						
-					}).forEach(RailConnection::update);
+					updateConnections();
 					
 				}
 				
@@ -542,10 +525,12 @@ public final class GrabTool extends Tool {
 			}
 			
 		} else {
+			
 			message.append(" dx:");
 			message.append(String.format("%5.0f", change.x));
 			message.append(", dy:");
 			message.append(String.format("%5.0f", change.y));
+			
 		}
 		
 		message.append(" (");
@@ -606,6 +591,58 @@ public final class GrabTool extends Tool {
 		
 	}
 	
+	public static boolean withinDistance(Snap<Vector2> snap) {
+		
+		return snap.getDistance() < SNAP_DISTANCE;
+		
+	}
+	
+	@Override
+	public void takeMessage(String input) {
+		
+		this.input = input;
+		
+		if (verticalSnap instanceof OriginSnap) {
+			
+			if (input.equals("")) {
+				
+				horizontalSnap = null;
+				
+			} else {
+				
+				horizontalSnap = new MessageSnap(true, input);
+				change.x = horizontalSnap.getDestincation().x - before.get(active).x;
+				
+			}
+			
+		}
+		
+		if (horizontalSnap instanceof OriginSnap) {
+			
+			if (input.equals("")) {
+				
+				verticalSnap = null;
+				
+			} else {
+				
+				verticalSnap = new MessageSnap(false, input);
+				change.y = verticalSnap.getDestincation().y - before.get(active).y;
+				
+			}
+			
+		}
+		
+		scene.selected.forEach((railPoint) -> {
+			
+			railPoint.getPosition().x = change.x + before.get(railPoint).x;
+			railPoint.getPosition().y = change.y + before.get(railPoint).y;
+			
+		});
+		
+		updateConnections();
+		
+	}
+	
 	private void middleMouse(MouseEvent e) {
 		
 		double angle = atan2(from.x - getMousePosition().x, from.y - getMousePosition().y);
@@ -661,53 +698,13 @@ public final class GrabTool extends Tool {
 		
 	}
 	
-	public static boolean withinDistance(Snap<Vector2> snap) {
+	private void updateConnections() {
 		
-		return snap.getDistance() < SNAP_DISTANCE;
-		
-	}
-	
-	@Override
-	public void takeMessage(String input) {
-		
-		this.input = input;
-		
-		if (verticalSnap instanceof OriginSnap) {
+		scene.connections.stream().filter((connection) -> {
 			
-			if (input.equals("")) {
-				
-				horizontalSnap = null;
-				
-			} else {
-				
-				horizontalSnap = new MessageSnap(true, input);
-				change.x = horizontalSnap.getDestincation().x - before.get(active).x;
-				
-			}
+			return scene.selected.stream().anyMatch(connection::has);
 			
-		}
-		
-		if (horizontalSnap instanceof OriginSnap) {
-			
-			if (input.equals("")) {
-				
-				verticalSnap = null;
-				
-			} else {
-				
-				verticalSnap = new MessageSnap(false, input);
-				change.y = verticalSnap.getDestincation().y - before.get(active).y;
-				
-			}
-			
-		}
-		
-		scene.selected.forEach((railPoint) -> {
-			
-			railPoint.getPosition().x = change.x + before.get(railPoint).x;
-			railPoint.getPosition().y = change.y + before.get(railPoint).y;
-			
-		});
+		}).forEach(RailConnection::update);
 		
 	}
 	
