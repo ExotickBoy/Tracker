@@ -17,8 +17,8 @@ public interface OnRail extends Collidable {
 	
 	public default AffineTransform getRailPointTransform() {
 		
-		Vector2 position = getRailLocation().getVector();
-		Vector2 direction = getRailLocation().getDerivativeVector();
+		Vector2 position = getRailLocation().getPoint();
+		Vector2 direction = getRailLocation().getDerivative();
 		double ang = atan2(direction.x, direction.y);
 		
 		return new AffineTransform(cos(ang), -sin(ang), sin(ang), cos(ang), position.x, position.y);

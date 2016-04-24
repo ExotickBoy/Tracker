@@ -184,8 +184,8 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail, Se
 	@Override
 	public Collider getCollider() {
 		
-		Vector2 position = getRailLocation().getVector();
-		Vector2 direction = getRailLocation().getDerivativeVector();
+		Vector2 position = getRailLocation().getPoint();
+		Vector2 direction = getRailLocation().getDerivative();
 		double ang = -atan2(direction.x, direction.y);
 		
 		Vector2 point1 = new Vector2(-TRAIN_WIDTH / 2, -TRAIN_LENGTH / 2);

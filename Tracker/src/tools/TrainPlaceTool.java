@@ -25,7 +25,6 @@ import items.RailPoint;
 import items.RailSignal;
 import items.Train;
 import items.TrainStop;
-import utils.BezierCurves;
 import utils.Snap;
 import utils.Vector2;
 
@@ -38,12 +37,11 @@ public class TrainPlaceTool extends Tool {
 		
 		public ClosestApproach(Vector2 mouse, RailConnection railConnection) {
 			
-			double t = BezierCurves.cubicClosesAproach(railConnection.p0, railConnection.p1, railConnection.p2, railConnection.p3, mouse);
-			boolean direction = Vector2.project(Vector2.subtract(BezierCurves.cubicBezier(railConnection.p0, railConnection.p1, railConnection.p2, railConnection.p3, t), mouse),
-					Vector2.rotate(BezierCurves.cubicBezierDerivative(railConnection.p0, railConnection.p1, railConnection.p2, railConnection.p3, t), PI / 2)) < 0;
-					
+			double t = railConnection.getClosestAproach(mouse);
+			boolean direction = Vector2.project(Vector2.subtract(railConnection.getPoint(t), mouse), Vector2.rotate(railConnection.getDerivative(t), PI / 2)) < 0;
+			
 			setDestincation(new RailLocation(t, railConnection, direction));
-			setDistance(Vector2.magnitude(Vector2.subtract(mouse, BezierCurves.cubicBezier(railConnection.p0, railConnection.p1, railConnection.p2, railConnection.p3, t))));
+			setDistance(Vector2.magnitude(Vector2.subtract(mouse, getDestincation().getPoint())));
 			
 			// location = getDestincation().getVector();
 			// this.mouse = mouse;
@@ -68,7 +66,7 @@ public class TrainPlaceTool extends Tool {
 			
 			setDestincation(new RailLocation(to));
 			getDestincation().toggleForward();
-			setDistance(Vector2.distance(getDestincation().getVector(), mouse) - OPPOSITE_SNAP_DISTANCE);
+			setDistance(Vector2.distance(getDestincation().getPoint(), mouse) - OPPOSITE_SNAP_DISTANCE);
 			
 		}
 		
@@ -97,10 +95,10 @@ public class TrainPlaceTool extends Tool {
 			if (to != null) {
 				
 				setDestincation(new RailLocation(to.point1 == point ? 1 : 0, to));
-				setDistance(Vector2.distance(getDestincation().getVector(), mouse) - OPPOSITE_SNAP_DISTANCE);
+				setDistance(Vector2.distance(getDestincation().getPoint(), mouse) - OPPOSITE_SNAP_DISTANCE);
 				
-				getDestincation().setForward(Vector2.project(Vector2.subtract(BezierCurves.cubicBezier(to.p0, to.p1, to.p2, to.p3, getDestincation().getT()), mouse),
-						Vector2.rotate(BezierCurves.cubicBezierDerivative(to.p0, to.p1, to.p2, to.p3, getDestincation().getT()), PI / 2)) < 0);
+				getDestincation().setForward(
+						Vector2.project(Vector2.subtract(to.getPoint(getDestincation().getT()), mouse), Vector2.rotate(to.getDerivative(getDestincation().getT()), PI / 2)) < 0);
 						
 			}
 			
@@ -143,7 +141,7 @@ public class TrainPlaceTool extends Tool {
 		getPlacing.add(TrainStop::new);
 		addPlacing.add((a) -> Driver.scene.trainStops.add((TrainStop) a));
 		
-		Train p = new Train(null);
+		Train p = new Train();
 		placing = p;
 		
 	}
@@ -162,7 +160,7 @@ public class TrainPlaceTool extends Tool {
 	
 	@Override
 	public void mouseReleased(MouseEvent e) {
-				
+	
 	}
 	
 	@Override
@@ -345,8 +343,10 @@ public class TrainPlaceTool extends Tool {
 			
 		}).forEach(snapBuilder::accept);
 		
-		return snapBuilder.build().filter(TrainPlaceTool::withinDistance).filter(Snap::isValid).min(Snap::sortByDistance).orElse(null);
-		
+		return snapBuilder.build()
+				// .filter(TrainPlaceTool::withinDistance)
+				.filter(Snap::isValid).min(Snap::sortByDistance).orElse(null);
+				
 	}
 	
 	private ArrayList<Collidable> getCollidables() {

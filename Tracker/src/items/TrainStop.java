@@ -142,8 +142,8 @@ public final class TrainStop implements Serializable, Drawable, OnRail, Selectab
 	@Override
 	public Collider getCollider() {
 		
-		Vector2 position = getRailLocation().getVector();
-		Vector2 direction = getRailLocation().getDerivativeVector();
+		Vector2 position = getRailLocation().getPoint();
+		Vector2 direction = getRailLocation().getDerivative();
 		double ang = PI / 2 - atan2(direction.x, direction.y);
 		
 		Vector2 point1 = new Vector2(-STOP_WIDTH / 2, STOP_OFFSET);

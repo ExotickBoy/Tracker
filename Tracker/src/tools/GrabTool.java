@@ -387,6 +387,17 @@ public final class GrabTool extends Tool {
 			
 		});
 		
+		scene.connections.stream().filter((connection) -> {
+			
+			return scene.railPoints.stream().anyMatch((railPoint) -> {
+				
+				return connection.has(railPoint);
+				
+			});
+			
+		}).forEach(RailConnection::update);
+		;
+		
 	}
 	
 	@Override
@@ -396,7 +407,7 @@ public final class GrabTool extends Tool {
 			
 			middleMouse(e);
 			
-		} 
+		}
 		
 	}
 	
@@ -479,7 +490,7 @@ public final class GrabTool extends Tool {
 					
 					scene.connections.stream().filter((connection) -> {
 						
-						return after.keySet().stream().anyMatch(connection::has);
+						return before.keySet().stream().anyMatch(connection::has);
 						
 					}).forEach(RailConnection::update);
 					
@@ -499,6 +510,12 @@ public final class GrabTool extends Tool {
 			entry.getKey().setPosition(entry.getValue());
 			
 		});
+		
+		scene.connections.stream().filter((connection) -> {
+			
+			return before.keySet().stream().anyMatch(connection::has);
+			
+		}).forEach(RailConnection::update);
 		
 	}
 	

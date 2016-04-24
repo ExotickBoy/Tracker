@@ -21,6 +21,7 @@ import javax.swing.KeyStroke;
 import core.Driver;
 import core.Edit;
 import core.Tool;
+import items.RailConnection;
 import items.RailPoint;
 import utils.Snap;
 import utils.Vector2;
@@ -70,10 +71,9 @@ public final class RotateTool extends Tool {
 		public DirectionSnap(RailPoint active, RailPoint railPoint) {
 			
 			setDestincation(-beforeRotation.get(active) - Vector2.atan2(Vector2.subtract(railPoint.getPosition(), active.getPosition())) - PI / 2);
-			//setDestincation(0d);
+			// setDestincation(0d);
 			
 			setDistance(distanceBetweenTwoAngles(relativeAngle, getDestincation()));
-			
 			
 			this.active = active;
 			this.railPoint = railPoint;
@@ -193,6 +193,8 @@ public final class RotateTool extends Tool {
 			
 		});
 		
+		updateConnections();
+		
 	}
 	
 	@Override
@@ -262,6 +264,8 @@ public final class RotateTool extends Tool {
 					
 				});
 				
+				updateConnections();
+				
 			}
 			
 			@Override
@@ -277,6 +281,8 @@ public final class RotateTool extends Tool {
 					railPoint.setDirection(after);
 					
 				});
+				
+				updateConnections();
 				
 			}
 			
@@ -294,8 +300,10 @@ public final class RotateTool extends Tool {
 			
 		});
 		
+		updateConnections();
+		
 	}
-	
+
 	@Override
 	public String getMessage() {
 		
@@ -373,6 +381,8 @@ public final class RotateTool extends Tool {
 				
 			});
 			
+			updateConnections();
+			
 		}
 		
 	}
@@ -419,6 +429,20 @@ public final class RotateTool extends Tool {
 		
 	}
 	
+	private void updateConnections() {
+		
+		scene.connections.stream().filter((connection) -> {
+			
+			return scene.railPoints.stream().anyMatch((railPoint) -> {
+				
+				return connection.has(railPoint);
+				
+			});
+			
+		}).forEach(RailConnection::update);
+		
+	}
+
 	private static boolean withinDistance(Snap<Double> snap) {
 		
 		return snap.getDistance() < SNAP_DISTANCE;
@@ -438,6 +462,5 @@ public final class RotateTool extends Tool {
 		}
 		
 	}
-	
 	
 }

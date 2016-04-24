@@ -16,7 +16,7 @@ public class Path {
 	ArrayList<RailLocation> connections;
 	Train train;
 	
-	boolean isComplete;
+	boolean isFinished;
 	
 	double lenghtInPixels;
 	double lenght;
@@ -38,18 +38,6 @@ public class Path {
 	
 	private Path(ArrayList<RailLocation> connections) {
 		
-		Driver.scene.connections.forEach((connection) -> {
-			
-			connection.dank = 0;
-			
-		});
-		
-		connections.forEach((connection) -> {
-			
-			connection.getConnection().dank = 2;
-			
-		});
-		
 		this.connections = connections;
 		
 		from = connections.get(0);
@@ -57,8 +45,9 @@ public class Path {
 		
 		lenghtInPixels = connections.stream().map(RailLocation::getConnection).mapToDouble(RailConnection::getLength).sum();
 		lenghtInPixels -= (from.isForward() ? 1 - from.getT() : from.getT()) * from.getConnection().getLength();
-		lenghtInPixels -= (to.isForward() ? 1 - to.getT() : to.getT()) * to.getConnection().getLength();
-		lenghtInPixels -= (to.isForward() ? 1 - to.getT() : to.getT()) * to.getConnection().getLength();
+		lenghtInPixels -= (to.isForward() ? to.getT() : 1 - to.getT()) * to.getConnection().getLength();
+		// System.out.println((to.isForward() ? 1 - to.getT() : to.getT()) * to.getConnection().getLength());
+		// System.out.println(to.getT() + " " + to.getConnection().length);
 		lenght = lenghtInPixels / METERS_PER_PIXEL;
 		
 	}
@@ -90,6 +79,10 @@ public class Path {
 		traveledInDeceleration = .5 * train.getMaxDeceleration() * pow(decelerationTime, 2);
 		traveledInCruis = lenght - (traveledInAcceleration + traveledInDeceleration);
 		
+		if (traveledInCruis < 0) {
+		
+		}
+		
 		cruisTo = (traveledInCruis / Train.MAX_SPEED) + accelerateTo;
 		brakeTo = cruisTo + decelerationTime;
 		
@@ -110,45 +103,40 @@ public class Path {
 		double traveled = 0; // metres
 		
 		if (timePassed < accelerateTo) {
-			System.out.println(timePassed + " accelerating ");
 			
 			speed = timePassed * train.getMaxAcceleration();
 			traveled = .5 * train.getMaxAcceleration() * pow(timePassed, 2);
 			
 		} else if (timePassed < cruisTo) {
-			System.out.println(timePassed + " curising");
 			
 			speed = Train.MAX_SPEED;
 			traveled = .5 * train.getMaxAcceleration() * pow(accelerateTo, 2) + Train.MAX_SPEED * (timePassed - accelerateTo);
 			
 		} else if (timePassed < brakeTo) {
-			System.out.println(timePassed + " braking");
 			
-			speed = (brakeTo - timePassed) * train.getMaxAcceleration();
+			speed = (brakeTo - timePassed) * train.getMaxDeceleration();
 			traveled = .5 * train.getMaxAcceleration() * pow(accelerateTo, 2) + Train.MAX_SPEED * (cruisTo - accelerateTo) //
 					+ traveledInDeceleration - .5 * train.getMaxDeceleration() * pow(timePassed - brakeTo, 2);
 					
 		} else {
 			
-			System.out.println("done");
-			
 			traveled = lenght;
-			isComplete = true;
+			isFinished = true;
 			
 		}
 		
 		train.setSpeed(speed);
 		
-		until = traveled * METERS_PER_PIXEL + ((from.isForward() ? 1 - from.getT() : from.getT()) * from.getConnection().length);
-		System.out.println(until);
+		until = traveled * METERS_PER_PIXEL + ((from.isForward() ? 1 - from.getT() : from.getT()) * from.getConnection().getLength());
 		connections.stream().anyMatch((connection) -> {
 			
-			until -= connection.getConnection().length;
+			until -= connection.getConnection().getLength();
 			
 			if (until < 0) {
 				
-				train.setLocation(new RailLocation(connection.isForward() ? (-until / connection.getConnection().length) : 1 - (-until / connection.getConnection().length),
-						connection.getConnection(), connection.isForward()));
+				train.setRailLocation(
+						new RailLocation(connection.isForward() ? (-until / connection.getConnection().getLength()) : 1 - (-until / connection.getConnection().getLength()),
+								connection.getConnection(), connection.isForward()));
 				train.recalculateSections();
 				return true;
 				
@@ -166,14 +154,14 @@ public class Path {
 		
 		ArrayList<RailLocation> connections = trace(new ArrayList<>(), from, to);
 		
-		if (connections != null) {
-			
-			return new Path(connections);
-			
-		} else {
+		if (connections == null || (from.isForward() == to.isForward() && from.getT() == to.getT() && from.getConnection() == to.getConnection())) {
 			
 			System.out.println("no path");
 			return null;
+			
+		} else {
+			
+			return new Path(connections);
 			
 		}
 		
@@ -181,15 +169,15 @@ public class Path {
 	
 	public static ArrayList<RailLocation> trace(ArrayList<RailLocation> been, RailLocation from, RailLocation to) {
 		
-		been.add(from);
-		
 		if (from.getConnection() == to.getConnection() && from.isForward() == to.isForward() && //
 				((to.isForward() && to.getT() < from.getT()) || (!to.isForward() && to.getT() > from.getT()))) {
 				
+			been.add(to);
 			return been;
 			
 		} else {
 			
+			been.add(from);
 			return from.getConnection().getConnections().stream().filter((RailConnection connection) -> {
 				
 				return connection.has(from.isForward() ? from.getConnection().point1 : from.getConnection().point2);
@@ -224,6 +212,12 @@ public class Path {
 			}).orElse(null);
 			
 		}
+		
+	}
+	
+	public boolean isFinished() {
+		
+		return isFinished;
 		
 	}
 	

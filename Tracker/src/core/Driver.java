@@ -142,8 +142,9 @@ public final class Driver {
 			currentSave = new File(args[0]);
 			scene = Scene.load(currentSave);
 			
-		} else {
-			
+		}
+		if (scene == null) {
+						
 			newScene();
 			
 		}
@@ -332,8 +333,15 @@ public final class Driver {
 	
 	private static void updateFrameTitle() {
 		
-		frame.setTitle(FRAME_TITLE + " - " + currentSave.getAbsolutePath());
+		if (currentSave == null) {
+				
+			frame.setTitle(FRAME_TITLE);
+			
+		} else {
 		
+			frame.setTitle(FRAME_TITLE + " - " + currentSave.getAbsolutePath());
+		
+		}
 	}
 	
 	public static void newScene() {

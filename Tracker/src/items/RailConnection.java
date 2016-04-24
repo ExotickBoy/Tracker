@@ -3,14 +3,11 @@ package items;
 import static java.lang.Math.PI;
 import static java.lang.Math.atan2;
 import static java.lang.Math.cos;
+import static java.lang.Math.hypot;
 import static java.lang.Math.sin;
-import static utils.BezierCurves.cubicBezier;
-import static utils.BezierCurves.cubicBezierArcLength;
-import static utils.BezierCurves.cubicBezierDerivative;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
@@ -25,17 +22,17 @@ import javax.imageio.ImageIO;
 import core.Driver;
 import interfaces.Drawable;
 import interfaces.Selectable;
+import utils.CubicBezierCurve;
 import utils.Vector2;
 
-public final class RailConnection implements Serializable, Drawable, Selectable {
+public final class RailConnection extends CubicBezierCurve implements Serializable, Drawable, Selectable {
 	
 	private static final long serialVersionUID = -3448982061099628662L;
 	
 	private static final double TRACK_PEACE_SIZE = 25;
-	
-	private static final int ARC_LENGTH_CALCULATION_RESOLUTION = 50;
 	private static final double BEZIER_ANCHOR_WEIGHT = .8;
-	private static final double RAIL_AMOUNT_MULTIPLYER = 1.55;
+	
+	private static final double RESOLUTION_MULTIPLYER = .4;
 	
 	private static BufferedImage railImage;
 	
@@ -45,14 +42,8 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 	boolean p1Positive = false;
 	boolean p2Positive = false;
 	
-	public Vector2 p0;
-	public Vector2 p1;
-	public Vector2 p2;
-	public Vector2 p3;
-	
-	public double length;
-	
-	public int dank;
+	Vector2[] positions;
+	double[] directions;
 	
 	static {
 		
@@ -70,13 +61,15 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 	
 	public RailConnection(RailPoint point1, RailPoint point2) {
 		
+		super();
+		
 		this.point1 = point1;
 		this.point2 = point2;
 		
 		p0 = point1.getPosition();
 		p3 = point2.getPosition();
 		
-		updateInterpoints();
+		update();
 		
 	}
 	
@@ -114,49 +107,18 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 	public void draw(Graphics2D g) {
 		
 		if (railImage != null) {
-			
-			updateInterpoints();
-			
-			int segments = (int) (length * RAIL_AMOUNT_MULTIPLYER / TRACK_PEACE_SIZE) + 1;
-			
-			for (int i = 0; i <= segments; i++) {
+						
+			for (int i = 0; i < directions.length; i++) {
 				
-				double t = i / (double) segments;
-				// t = sin(t * (PI ));
+				Vector2 p = positions[i];
+				double ang = directions[i];
 				
-				double dx = cubicBezierDerivative(p0.x, p1.x, p2.x, p3.x, t);
-				double dy = cubicBezierDerivative(p0.y, p1.y, p2.y, p3.y, t);
-				
-				double x = cubicBezier(p0.x, p1.x, p2.x, p3.x, t);
-				double y = cubicBezier(p0.y, p1.y, p2.y, p3.y, t);
-				
-				double ang = atan2(dx, dy);
-				
-				AffineTransform affineTransform = new AffineTransform(cos(ang), -sin(ang), sin(ang), cos(ang), x, y);
+				AffineTransform affineTransform = new AffineTransform(cos(ang), -sin(ang), sin(ang), cos(ang), p.x, p.y);
 				AffineTransform innitialTransform = g.getTransform();
 				g.transform(affineTransform);
-				
 				g.drawImage(railImage, (int) (-TRACK_PEACE_SIZE / 2), (int) (-TRACK_PEACE_SIZE / 2), (int) (TRACK_PEACE_SIZE), (int) (TRACK_PEACE_SIZE), null);
-				
-				if (dank != 0) {
-					
-					if (dank == 3) {
-						
-						g.setColor(Color.GREEN);
-						
-					} else if (dank == 1) {
-						
-						g.setColor(Color.RED);
-						
-					} else if (dank == 2) {
-						
-						g.setColor(Color.YELLOW);
-						
-					}
-					g.fill(new Rectangle(-10, -10, 20, 20));
-					
-				}
-				
+				g.setColor(Color.RED);
+				// g.drawString("" + i, 15, 0);
 				g.setTransform(innitialTransform);
 				
 			}
@@ -175,6 +137,23 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 		updateLength();
 		updateTrains();
 		
+		int segments = (int) (length / TRACK_PEACE_SIZE) + 1;
+		double eachSegment = length / segments;
+		
+		directions = new double[segments + 1];
+		positions = new Vector2[segments + 1];
+		
+		for (int i = 0; i < segments + 1; i++) {
+			
+			double t = getTAtDistanceFromStart(eachSegment * i);
+			
+			Vector2 dp = getDerivative(t);
+			
+			positions[i] = getPoint(t);
+			directions[i] = atan2(dp.x, dp.y);
+			
+		}
+		
 	}
 	
 	public void updateTrains() {
@@ -187,38 +166,43 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 		
 	}
 	
-	public void updateLength() {
-		
-		length = cubicBezierArcLength(p0, p1, p2, p3, ARC_LENGTH_CALCULATION_RESOLUTION);
-		
-	}
-	
-	public double getLength() {
-		
-		return length;
-		
-	}
-	
 	public void updateInterpoints() {
 		
 		p0 = point1.getPosition();
 		p3 = point2.getPosition();
 		
+		updateP1();
+		updateP2();
+		
+	}
+	
+	private Vector2 updateP1() {
+		
 		Vector2 centre = Vector2.divide(Vector2.add(p0, p3), 2);
 		
-		Vector2 p1a = Vector2.add(p0, Vector2.rotate(new Vector2(Vector2.magnitude(Vector2.subtract(p3, centre)), 0), point1.getDirection()));
-		Vector2 p2a = Vector2.add(p3, Vector2.rotate(new Vector2(Vector2.magnitude(Vector2.subtract(p0, centre)), 0), point2.getDirection()));
-		
-		Vector2 p1b = Vector2.add(p0, Vector2.rotate(new Vector2(Vector2.magnitude(Vector2.subtract(p3, centre)) * BEZIER_ANCHOR_WEIGHT, 0), point1.getDirection() + PI));
-		Vector2 p2b = Vector2.add(p3, Vector2.rotate(new Vector2(Vector2.magnitude(Vector2.subtract(p0, centre)) * BEZIER_ANCHOR_WEIGHT, 0), point2.getDirection() + PI));
+		Vector2 p1a = Vector2.add(getP0(), Vector2.rotate(new Vector2(Vector2.magnitude(Vector2.subtract(getP3(), centre)), 0), point1.getDirection()));
+		Vector2 p1b = Vector2.add(getP0(), Vector2.rotate(new Vector2(Vector2.magnitude(Vector2.subtract(getP3(), centre)) * BEZIER_ANCHOR_WEIGHT, 0), point1.getDirection() + PI));
 		
 		p1Positive = Vector2.distance(p1a, centre) > Vector2.distance(p1b, centre);
-		p2Positive = Vector2.distance(p2a, centre) > Vector2.distance(p2b, centre);
 		
 		p1 = p1Positive ? p1b : p1a;
+		
+		return p1;
+		
+	}
+	
+	private Vector2 updateP2() {
+		
+		Vector2 centre = Vector2.divide(Vector2.add(p0, p3), 2);
+		
+		Vector2 p2a = Vector2.add(getP3(), Vector2.rotate(new Vector2(Vector2.magnitude(Vector2.subtract(getP0(), centre)), 0), point2.getDirection()));
+		Vector2 p2b = Vector2.add(getP3(), Vector2.rotate(new Vector2(Vector2.magnitude(Vector2.subtract(getP0(), centre)) * BEZIER_ANCHOR_WEIGHT, 0), point2.getDirection() + PI));
+		
+		p2Positive = Vector2.distance(p2a, centre) > Vector2.distance(p2b, centre);
+		
 		p2 = p2Positive ? p2b : p2a;
 		
-		updateLength();
+		return p2;
 		
 	}
 	
@@ -239,6 +223,15 @@ public final class RailConnection implements Serializable, Drawable, Selectable 
 		RailPoint shared = other.has(point1) ? point1 : point2;
 		
 		return (shared == point1 ? p1Positive : p2Positive) != (shared == other.point1 ? other.p1Positive : other.p2Positive);
+		
+	}
+	
+	@Override
+	protected void updateLength() {
+		
+		setResolution((int) (hypot(p0.x - p3.x, p0.y - p3.y) * RESOLUTION_MULTIPLYER));
+		
+		super.updateLength();
 		
 	}
 	

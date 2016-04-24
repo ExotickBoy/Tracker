@@ -107,8 +107,8 @@ public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
 	@Override
 	public Collider getCollider() {
 		
-		Vector2 position = getRailLocation().getVector();
-		Vector2 direction = getRailLocation().getDerivativeVector();
+		Vector2 position = getRailLocation().getPoint();
+		Vector2 direction = getRailLocation().getDerivative();
 		double ang = PI / 2 - atan2(direction.x, direction.y);
 		
 		Vector2 point1 = new Vector2(-SIGNAL_WIDTH / 2, SIGNAL_OFFSET);

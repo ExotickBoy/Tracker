@@ -28,17 +28,25 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	String name;
 	
 	private RailLocation location;
-	private RailLocation going;
-	private Path path;
+	private transient Path path;
 	private double speed = 0;
 	private boolean running;
 	
 	private ArrayList<TrainSection> sections = new ArrayList<>();
+	
 	private ArrayList<TrainStop> rout = new ArrayList<>();
+	private RailLocation going;
+	private int goingIndex;
+	
+	public Train() {
+		
+		addSection(TrainSection.Locomotive::new);
+		
+	}
 	
 	public Train(RailLocation location) {
 		
-		this.setLocation(location);
+		setRailLocation(location);
 		addSection(TrainSection.Locomotive::new);
 		
 	}
@@ -56,7 +64,8 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	@Override
 	public void setRailLocation(RailLocation location) {
 		
-		this.setLocation(location);
+		this.location = location;
+		
 		recalculateSections();
 		
 	}
@@ -228,7 +237,23 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 			
 			path.updateTrain(time);
 			
+			if (path.isFinished()) {
+				
+				going = next();
+				path = Path.pathFind(location, going);
+				
+			}
+			
 		}
+		
+	}
+	
+	private RailLocation next() {
+		
+		goingIndex++;
+		goingIndex %= rout.size();
+		
+		return rout.get(goingIndex).location;
 		
 	}
 	
@@ -239,6 +264,7 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 		if (going == null) {
 			
 			going = trainStop.getRailLocation();
+			goingIndex = 0;
 			path = Path.pathFind(location, going);
 			
 		}
@@ -269,7 +295,7 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 			path = null;
 			
 		}
-				
+		
 	}
 	
 	public ArrayList<TrainStop> getRout() {
@@ -279,13 +305,31 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	}
 	
 	private RailLocation getLocationBehind(RailLocation another) {
+				
+		return downRail(another, TrainSection.TRAIN_LENGTH);
 		
-		another.connection.updateLength();
+	}
+	
+	private RailLocation downRail(RailLocation another, double howFar) {
 		
-		double t = another.t + (another.forward ? 1 : -1) * TrainSection.TRAIN_LENGTH / another.connection.length;
+		double newT = another.t + (another.forward ? 1 : -1) * another.connection.getLength() / howFar;
 		
-		return new RailLocation(t, another.connection, another.forward);
-		
+		// if (newT > 0 || newT < 1 && been.indexOf(another.getConnection()) < been.size() - 2) {
+		//
+		// RailConnection newConnection = been.get(been.indexOf(another.getConnection()) + 1);
+		// RailLocation newLocation = new RailLocation(another.connection.isSameDirection(newConnection) ? 0 : 1, newConnection,
+		// another.connection.isSameDirection(newConnection) ? another.forward : !another.forward);
+		//
+		// double distanceLeft = howFar - (another.forward ? another.t : 1 - another.t) * another.connection.getLength();
+		//
+		// return downRail(newLocation, distanceLeft);
+		//
+		// } else {
+		//
+		return new RailLocation(newT, another.connection, another.forward);
+		//
+		// }
+		//
 	}
 	
 	@Override
@@ -339,12 +383,6 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 		
 	}
 	
-	public void setLocation(RailLocation location) {
-		
-		this.location = location;
-		
-	}
-
 	public void setSpeed(double speed) {
 		
 		this.speed = speed;

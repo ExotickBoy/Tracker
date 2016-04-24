@@ -20,8 +20,8 @@ public class Units {
 	
 	private static final String KILO_GRAM_LONG = "grams";
 	private static final String METRE_LONG = "metres";
-	private static final String METRE_PER_SECOND_LONG = "mertres per second";
-	private static final String METRE_PER_SECOND_PER_SECOND_LONG = "mertres per second squared";
+	private static final String METRE_PER_SECOND_LONG = "metres per second";
+	private static final String METRE_PER_SECOND_PER_SECOND_LONG = "metres per second squared";
 	
 	private static final String KILO_GRAM_SHORT = "g";
 	private static final String METRE_SHORT = "m";
@@ -34,7 +34,7 @@ public class Units {
 	private static final String FORMAT_STRING = "#,##0.#";
 	
 	private static final int DEFAULT_STEP = 1000;
-	private static final String ILLEGAL_ARGUMENT_MESSAGE = "Must either be Uints.SHORT or Units.LONG";
+	private static final String ILLEGAL_ARGUMENT_MESSAGE = "Must either be Units.SHORT or Units.LONG";
 	
 	private static final String[] SHORT_PREFIXSE = new String[] { VALUE_0_SHORT, VALUE_1_SHORT, VALUE_2_SHORT, VALUE_3_SHORT, VALUE_4_SHORT };
 	private static final String[] LONG_PREFIXSE = new String[] { VALUE_0_LONG, VALUE_1_LONG, VALUE_2_LONG, VALUE_3_LONG, VALUE_4_LONG };
@@ -92,7 +92,7 @@ public class Units {
 			longPrefixes.put(i, LONG_PREFIXSE[i]);
 			amountToLong.put(i, (amount, digitGroups) -> {
 				
-				return new DecimalFormat(FORMAT_STRING).format(amount / Math.pow(stepSize, digitGroups)) + " " + shortPrefixes.get(digitGroups) + shortSuffix;
+				return new DecimalFormat(FORMAT_STRING).format(amount / Math.pow(stepSize, digitGroups)) + " " + longPrefixes.get(digitGroups) + longSuffix;
 				
 			});
 		}
@@ -116,11 +116,27 @@ public class Units {
 		
 		if (length == SHORT) {
 			
-			return amountToShort.get(digitGroups).apply(amount, digitGroups);
+			if (amountToShort.containsKey(digitGroups)) {
+				
+				return amountToShort.get(digitGroups).apply(amount, digitGroups);
+				
+			} else {
+				
+				return amountToShort.get(0).apply(amount, digitGroups);
+				
+			}
 			
 		} else if (length == LONG) {
 			
-			return amountToLong.get(digitGroups).apply(amount, digitGroups);
+			if (amountToLong.containsKey(digitGroups)) {
+				
+				return amountToLong.get(digitGroups).apply(amount, digitGroups);
+				
+			} else {
+				
+				return amountToLong.get(0).apply(amount, digitGroups);
+				
+			}
 			
 		} else {
 			

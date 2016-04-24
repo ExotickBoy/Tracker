@@ -54,7 +54,7 @@ public final class RailPointTab extends ComboBoxTab<RailPoint> implements MouseL
 		setTitle(TAB_TITLE);
 		
 		Driver.viewPanel.addMouseListener(this);
-		setComboBoxModel(new DefaultComboBoxModel<>(getScene().railPoints.stream().toArray(size -> new RailPoint[size])));
+		setComboBoxModel(new DefaultComboBoxModel<>(scene.railPoints.stream().toArray(size -> new RailPoint[size])));
 		
 		JPanel top = new JPanel();
 		top.setLayout(new GridLayout(2, 1));
