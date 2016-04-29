@@ -343,10 +343,8 @@ public class TrainPlaceTool extends Tool {
 			
 		}).forEach(snapBuilder::accept);
 		
-		return snapBuilder.build()
-				// .filter(TrainPlaceTool::withinDistance)
-				.filter(Snap::isValid).min(Snap::sortByDistance).orElse(null);
-				
+		return snapBuilder.build().filter(TrainPlaceTool::withinDistance).filter(Snap::isValid).min(Snap::sortByDistance).orElse(null);
+		
 	}
 	
 	private ArrayList<Collidable> getCollidables() {

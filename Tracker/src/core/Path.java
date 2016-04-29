@@ -1,13 +1,14 @@
 package core;
 
+import static java.lang.Math.*;
+
 import java.util.ArrayList;
 import java.util.Objects;
 
 import items.RailConnection;
 import items.RailLocation;
 import items.Train;
-
-import static java.lang.Math.*;
+import utils.RootFinder;
 
 public class Path {
 	
@@ -19,7 +20,7 @@ public class Path {
 	boolean isFinished;
 	
 	double lenghtInPixels;
-	double lenght;
+	double length;
 	
 	long startsTime;
 	
@@ -48,7 +49,7 @@ public class Path {
 		lenghtInPixels -= (to.isForward() ? to.getT() : 1 - to.getT()) * to.getConnection().getLength();
 		// System.out.println((to.isForward() ? 1 - to.getT() : to.getT()) * to.getConnection().getLength());
 		// System.out.println(to.getT() + " " + to.getConnection().length);
-		lenght = lenghtInPixels / METERS_PER_PIXEL;
+		length = lenghtInPixels / METERS_PER_PIXEL;
 		
 	}
 	
@@ -77,25 +78,50 @@ public class Path {
 		
 		traveledInAcceleration = .5 * train.getMaxAcceleration() * pow(accelerationTime, 2);
 		traveledInDeceleration = .5 * train.getMaxDeceleration() * pow(decelerationTime, 2);
-		traveledInCruis = lenght - (traveledInAcceleration + traveledInDeceleration);
-		
-		if (traveledInCruis < 0) {
-		
-		}
+		traveledInCruis = length - (traveledInAcceleration + traveledInDeceleration);
 		
 		cruisTo = (traveledInCruis / Train.MAX_SPEED) + accelerateTo;
 		brakeTo = cruisTo + decelerationTime;
 		
-		// dv/dt = a
-		// dp/dt = v = at
-		// p = 2at^2
-		
-		// velocity is the integral of acceleration
-		// position is the integral of velocity
+		if (traveledInCruis < 0) {
+			
+			// double a = train.getMaxAcceleration() + train.getMaxDeceleration();
+			// double b = 0;
+			// double c = -2 * length;
+			
+			double d = train.getMaxDeceleration();
+			double a = train.getMaxAcceleration();
+			
+			if (a == d) {
+				
+				brakeTo = sqrt(2) * sqrt(length);
+				
+			} else {
+				
+				double ac = -d + (2 * d * d) / (d - a) - (d * d * d - d * d * a) / (d * d - 2 * a * d + a * a);
+				double bc = 0;
+				double cc = 4 * length;
+				
+				brakeTo = abs(RootFinder.quadraticRoots(ac, bc, cc)[0]);
+				System.out.println("der lol");
+				
+			}
+			
+			accelerateTo = (d * brakeTo) / (a + d);
+			cruisTo = accelerateTo;
+			
+		}
 		
 	}
 	
 	public void updateTrain(long time) {
+		
+		try {
+			Thread.sleep(5);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		double timePassed = (time - startsTime) / 1000.; // s
 		
@@ -115,15 +141,16 @@ public class Path {
 		} else if (timePassed < brakeTo) {
 			
 			speed = (brakeTo - timePassed) * train.getMaxDeceleration();
-			traveled = .5 * train.getMaxAcceleration() * pow(accelerateTo, 2) + Train.MAX_SPEED * (cruisTo - accelerateTo) //
-					+ traveledInDeceleration - .5 * train.getMaxDeceleration() * pow(timePassed - brakeTo, 2);
-					
+			traveled = length - .5 * train.getMaxDeceleration() * pow(timePassed - brakeTo, 2);
+			
 		} else {
 			
-			traveled = lenght;
+			traveled = length;
 			isFinished = true;
 			
 		}
+		
+		System.out.println(timePassed + "," + speed + "," + traveled);
 		
 		train.setSpeed(speed);
 		
