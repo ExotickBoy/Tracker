@@ -1,6 +1,11 @@
 package items;
 
+import static java.lang.Math.PI;
+
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,12 +23,14 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	private static final long serialVersionUID = 0L;
 	
 	private static final String DEFAULT_TRAIN = "Train";
-	
+	private static final Color NAME_LABLE_COLOR = Color.RED;
 	public static final double MAX_SPEED = 10; // m/s
 	
 	private HashMap<Train, String> trainToName = new HashMap<>();
 	
 	private boolean willDrawCollider;
+	private boolean willDrawName = true;
+	private boolean willDrawPath = true;
 	
 	String name;
 	
@@ -33,6 +40,7 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	private boolean running;
 	
 	private ArrayList<TrainSection> sections = new ArrayList<>();
+	private ArrayList<RailConnection> been = new ArrayList<>();
 	
 	private ArrayList<TrainStop> rout = new ArrayList<>();
 	private RailLocation going;
@@ -51,13 +59,46 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 		
 	}
 	
+	@Override
 	public void draw(Graphics2D g) {
 		
-		getSections().forEach((trainSection) -> {
+		if (path != null && willDrawPath) {
 			
-			trainSection.draw(g);
+			path.draw(g);
 			
-		});
+		}
+		
+		for (int i = getSections().size() - 1; i >= 0; i--) {
+			
+			getSections().get(i).draw(g);
+			
+		}
+		
+		Font fontBefore = g.getFont();
+		AffineTransform affineTransform = getRailLocation().getRailPointTransform();
+		affineTransform.rotate(PI / 2);
+		AffineTransform innitialTransform = g.getTransform();
+		g.transform(affineTransform);
+		
+		if (willDrawName) {
+			
+			g.setColor(NAME_LABLE_COLOR);
+			if (getRailLocation().getDirection() < 0) {
+				
+				g.setColor(NAME_LABLE_COLOR);
+				g.setFont(fontBefore.deriveFont((float) -fontBefore.getSize()));
+				g.drawString(getName(), TrainSection.TRAIN_LENGTH / 2, TrainSection.TRAIN_WIDTH / 2);
+				g.setFont(fontBefore);
+				
+			} else {
+				
+				g.drawString(getName(), -TrainSection.TRAIN_LENGTH / 2, -TrainSection.TRAIN_WIDTH / 2);
+				
+			}
+			
+		}
+		
+		g.setTransform(innitialTransform);
 		
 	}
 	
@@ -65,6 +106,13 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	public void setRailLocation(RailLocation location) {
 		
 		this.location = location;
+		
+		if (location != null) {
+			
+			been.remove(location.getConnection());
+			been.add(0, location.getConnection());
+			
+		}
 		
 		recalculateSections();
 		
@@ -216,7 +264,7 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 				
 				for (int i = 1; i < getSections().size(); i++) {
 					
-					getSections().get(i).location = getLocationBehind(getSections().get(i - 1).location);
+					getSections().get(i).setRailLocation(getLocationBehind(getSections().get(i - 1).location));
 					
 				}
 				
@@ -305,31 +353,9 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	}
 	
 	private RailLocation getLocationBehind(RailLocation another) {
-				
-		return downRail(another, TrainSection.TRAIN_LENGTH);
 		
-	}
-	
-	private RailLocation downRail(RailLocation another, double howFar) {
+		return another.downRail(-TrainSection.TRAIN_LENGTH, been);
 		
-		double newT = another.t + (another.forward ? 1 : -1) * another.connection.getLength() / howFar;
-		
-		// if (newT > 0 || newT < 1 && been.indexOf(another.getConnection()) < been.size() - 2) {
-		//
-		// RailConnection newConnection = been.get(been.indexOf(another.getConnection()) + 1);
-		// RailLocation newLocation = new RailLocation(another.connection.isSameDirection(newConnection) ? 0 : 1, newConnection,
-		// another.connection.isSameDirection(newConnection) ? another.forward : !another.forward);
-		//
-		// double distanceLeft = howFar - (another.forward ? another.t : 1 - another.t) * another.connection.getLength();
-		//
-		// return downRail(newLocation, distanceLeft);
-		//
-		// } else {
-		//
-		return new RailLocation(newT, another.connection, another.forward);
-		//
-		// }
-		//
 	}
 	
 	@Override

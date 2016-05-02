@@ -93,7 +93,7 @@ public final class ViewPanel extends JPanel implements KeyListener, MouseWheelLi
 		
 		Graphics2D g = (Graphics2D) g2;
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		
 		if (Driver.tool != null) {
 			

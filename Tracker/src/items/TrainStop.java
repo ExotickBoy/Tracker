@@ -3,6 +3,8 @@ package items;
 import static java.lang.Math.PI;
 import static java.lang.Math.atan2;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
@@ -19,8 +21,8 @@ import interfaces.Drawable;
 import interfaces.OnRail;
 import interfaces.Selectable;
 import utils.Collider;
-import utils.Vector2;
 import utils.Collider.Triangle;
+import utils.Vector2;
 
 public final class TrainStop implements Serializable, Drawable, OnRail, Selectable {
 	
@@ -34,9 +36,12 @@ public final class TrainStop implements Serializable, Drawable, OnRail, Selectab
 	
 	private static final String TEXTURE_PATH = "src/train_stop.png";
 	
+	private static final Color NAME_LABEL_COLOR = Color.RED;
+	
 	private static HashMap<TrainStop, String> trainStopToName = new HashMap<>();
 	private static BufferedImage texture;
 	private boolean willDrawCollider;
+	private boolean willDrawName = true;
 	
 	RailLocation location;
 	String name;
@@ -128,12 +133,27 @@ public final class TrainStop implements Serializable, Drawable, OnRail, Selectab
 	
 	public void draw(Graphics2D g) {
 		
-		AffineTransform affineTransform = getRailPointTransform();
+		Font fontBefore = g.getFont();
+		AffineTransform affineTransform = getRailLocation().getRailPointTransform();
 		affineTransform.rotate(PI / 2);
 		AffineTransform innitialTransform = g.getTransform();
 		g.transform(affineTransform);
 		
 		g.drawImage(texture, (int) (-STOP_WIDTH / 2), (int) (STOP_OFFSET), (int) STOP_WIDTH, (int) STOP_LENGTH, null);
+		
+		if (willDrawName) {
+			
+			if (getRailLocation().getDirection() < -.01) {
+				
+				g.setFont(fontBefore.deriveFont((float) -fontBefore.getSize()));
+				
+			}
+			
+			g.setColor(NAME_LABEL_COLOR);
+			g.drawString(getName(), g.getFont().getSize(), (int) STOP_LENGTH);
+			g.setFont(fontBefore);
+			
+		}
 		
 		g.setTransform(innitialTransform);
 		

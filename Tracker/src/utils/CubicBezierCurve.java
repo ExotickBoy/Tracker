@@ -2,9 +2,14 @@ package utils;
 
 import static java.lang.Math.hypot;
 import static utils.BezierUtils.*;
+
+import java.io.Serializable;
+
 import static java.lang.Math.*;
 
-public class CubicBezierCurve {
+public class CubicBezierCurve implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
 	
 	protected Vector2 p0;
 	protected Vector2 p1;
@@ -121,18 +126,28 @@ public class CubicBezierCurve {
 		
 	}
 	
-	public double getDistanceFromBegining(double t) {
+	public double getDistanceFromStart(double t) {
 		
 		int startAt = (int) (t * getResolution());
 		double between = (t * getResolution() - startAt);
 		
-		return tToLength[startAt] * between + tToLength[startAt + 1] * (1 - between);
+		if (startAt + 1 >= tToLength.length) {
+			System.out.println("bad");
+			return tToLength[tToLength.length - 1];
+			
+		} else if (t < 0) {
+			System.out.println("bad");
+			return 0;
+			
+		}
+		
+		return tToLength[startAt] * (1 - between) + tToLength[startAt + 1] * between;
 		
 	}
 	
 	public double getDistanceFromEnd(double t) {
 		
-		return length - getDistanceFromBegining(t);
+		return length - getDistanceFromStart(t);
 		
 	}
 	
@@ -169,8 +184,8 @@ public class CubicBezierCurve {
 			double beginning = tToLength[between];
 			double ending = tToLength[between + 1];
 			
-			double gap 			=	ending - beginning;
-			double difference	=	distance - beginning;
+			double gap = ending - beginning;
+			double difference = distance - beginning;
 			
 			return ((double) between / resolution) + difference / gap / resolution;
 			

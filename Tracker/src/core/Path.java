@@ -1,18 +1,47 @@
 package core;
 
-import static java.lang.Math.*;
+import static java.lang.Math.abs;
+import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
 
+import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 
+import javax.imageio.ImageIO;
+
+import interfaces.Drawable;
 import items.RailConnection;
 import items.RailLocation;
 import items.Train;
 import utils.RootFinder;
 
-public class Path {
+public class Path implements Drawable {
 	
 	private static final double METERS_PER_PIXEL = 15;
+	
+	private static final String RED_ARROW_TEXTURE_PATH = "src/path_red.png";
+	private static final String AMBER_ARROW_TEXTURE_PATH = "src/path_amber.png";
+	private static final String GREEN_ARROW_TEXTURE_PATH = "src/path_green.png";
+	
+	private static final int RED_COLOR = 0;
+	private static final int AMBER_COLOR = 1;
+	private static final int GREEN_COLOR = 2;
+	
+	private static final int ARROW_WIDTH = 30;
+	private static final int ARROW_LENGTH = 15;
+	private static final double SPACE_BETWEEN_ARROWS = 30;
+	
+	private transient static BufferedImage redArrowTexture;
+	private transient static BufferedImage amberArrowTexture;
+	private transient static BufferedImage greenArrowTexture;
+	
+	private static HashMap<Integer, BufferedImage> colorToImage = new HashMap<>();
 	
 	ArrayList<RailLocation> connections;
 	Train train;
@@ -36,6 +65,26 @@ public class Path {
 	
 	private RailLocation from;
 	private RailLocation to;
+	
+	static {
+		
+		try {
+			
+			redArrowTexture = ImageIO.read(new File(RED_ARROW_TEXTURE_PATH));
+			amberArrowTexture = ImageIO.read(new File(AMBER_ARROW_TEXTURE_PATH));
+			greenArrowTexture = ImageIO.read(new File(GREEN_ARROW_TEXTURE_PATH));
+			
+		} catch (IOException e) {
+			
+			e.printStackTrace();
+			
+		}
+		
+		colorToImage.put(RED_COLOR, redArrowTexture);
+		colorToImage.put(AMBER_COLOR, amberArrowTexture);
+		colorToImage.put(GREEN_COLOR, greenArrowTexture);
+		
+	}
 	
 	private Path(ArrayList<RailLocation> connections) {
 		
@@ -116,13 +165,6 @@ public class Path {
 	
 	public void updateTrain(long time) {
 		
-		try {
-			Thread.sleep(5);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 		double timePassed = (time - startsTime) / 1000.; // s
 		
 		double speed = 0; // m/s
@@ -149,8 +191,6 @@ public class Path {
 			isFinished = true;
 			
 		}
-		
-		System.out.println(timePassed + "," + speed + "," + traveled);
 		
 		train.setSpeed(speed);
 		
@@ -245,6 +285,85 @@ public class Path {
 	public boolean isFinished() {
 		
 		return isFinished;
+		
+	}
+	
+	@Override
+	public void draw(Graphics2D g) {
+		
+		int amount = (int) (length * METERS_PER_PIXEL / SPACE_BETWEEN_ARROWS);
+		
+		int index = 1;
+		RailLocation at = from;
+		for (int i = 0; i < amount; i++) {
+			
+			AffineTransform before = g.getTransform();
+			AffineTransform transfrom = at.getRailPointTransform();
+			g.transform(transfrom);
+			
+			g.drawImage(colorToImage.get(1), -ARROW_WIDTH / 2, 0, ARROW_WIDTH, ARROW_LENGTH, null);
+			
+			g.setTransform(before);
+			
+			double left = length * METERS_PER_PIXEL / amount;
+			
+			if (at.isForward()) {
+				
+				if (at.getConnection().getDistanceFromStart(at.getT()) > left) {
+					
+					at = new RailLocation(at.getConnection().getTAtDistanceFromStart(at.getConnection().getDistanceFromStart(at.getT()) - left), at.getConnection(),
+							at.isForward());
+							
+				} else {
+					
+					left -= at.getConnection().getDistanceFromStart(at.getT());
+					
+					RailConnection newConnection;
+					
+					if (index == connections.size()) {
+						
+						break;
+						
+					} else {
+						
+						newConnection = connections.get(index++).getConnection();
+						at = new RailLocation(
+								at.getConnection().isSameDirection(newConnection) ? newConnection.getTAtDistanceFromEnd(left) : newConnection.getTAtDistanceFromStart(left),
+								newConnection, at.getConnection().isSameDirection(newConnection) ? at.isForward() : !at.isForward());
+					}
+//					System.out.println("shy");
+				}
+				
+			} else {
+				
+				if (at.getConnection().getDistanceFromEnd(at.getT()) > left) {
+					
+					at = new RailLocation(at.getConnection().getTAtDistanceFromStart(at.getConnection().getDistanceFromStart(at.getT()) + left), at.getConnection(),
+							at.isForward());
+							
+				} else {
+					
+					left -= at.getConnection().getDistanceFromEnd(at.getT());
+					
+					RailConnection newConnection;
+					
+					if (index == connections.size()) {
+						
+						break;
+						
+					} else {
+						
+						newConnection = connections.get(index++).getConnection();
+						at = new RailLocation(
+								at.getConnection().isSameDirection(newConnection) ? newConnection.getTAtDistanceFromStart(left) : newConnection.getTAtDistanceFromEnd(left),
+								newConnection, at.getConnection().isSameDirection(newConnection) ? at.isForward() : !at.isForward());
+					}
+					
+				}
+				
+			}
+			
+		}
 		
 	}
 	

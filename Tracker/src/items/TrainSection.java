@@ -84,7 +84,7 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail, Se
 	
 	private TrainSection(RailLocation location) {
 		
-		this.location = location;
+		setRailLocation(location);
 		
 	}
 	
@@ -150,7 +150,7 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail, Se
 	
 	public void draw(Graphics2D g) {
 		
-		AffineTransform affineTransform = getRailPointTransform();
+		AffineTransform affineTransform = getRailLocation().getRailPointTransform();
 		AffineTransform innitialTransform = g.getTransform();
 		g.transform(affineTransform);
 		

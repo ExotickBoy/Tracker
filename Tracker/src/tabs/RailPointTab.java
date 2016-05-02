@@ -229,7 +229,6 @@ public final class RailPointTab extends ComboBoxTab<RailPoint> implements MouseL
 					
 				}
 				
-
 				update();
 				
 				Driver.frame.repaint();
@@ -291,7 +290,6 @@ public final class RailPointTab extends ComboBoxTab<RailPoint> implements MouseL
 					});
 					
 					active.getPosition().x = to;
-					
 					Driver.frame.repaint();
 					
 				}
@@ -307,7 +305,33 @@ public final class RailPointTab extends ComboBoxTab<RailPoint> implements MouseL
 			
 			if (active != null && user) {
 				
-				active.getPosition().y = Double.valueOf(ySpinner.getModel().getValue().toString());
+				double to = Double.valueOf(ySpinner.getModel().getValue().toString());
+				Driver.addEdit(new Edit() {
+					
+					double after = to;
+					double before = active.getPosition().y;
+					
+					RailPoint associated = active;
+					
+					@Override
+					public void undo() {
+						
+						associated.getPosition().y = before;
+						associated.updateConnections();
+						
+					}
+					
+					@Override
+					public void redo() {
+						
+						associated.getPosition().y = after;
+						associated.updateConnections();
+						
+					}
+					
+				});
+				
+				active.getPosition().y = to;
 				Driver.frame.repaint();
 				
 			}
@@ -368,8 +392,33 @@ public final class RailPointTab extends ComboBoxTab<RailPoint> implements MouseL
 			
 			if (active != null && user) {
 				
-				active.setDirection(toRadians(Double.valueOf(directionSpinner.getValue().toString())));
+				double to = toRadians(Double.valueOf(directionSpinner.getValue().toString()));
+				Driver.addEdit(new Edit() {
+					
+					double after = to;
+					double before = active.getPosition().y;
+					
+					RailPoint associated = active;
+					
+					@Override
+					public void undo() {
+						
+						associated.getPosition().y = before;
+						associated.updateConnections();
+						
+					}
+					
+					@Override
+					public void redo() {
+						
+						associated.getPosition().y = after;
+						associated.updateConnections();
+						
+					}
+					
+				});
 				
+				active.setDirection(to);
 				Driver.frame.repaint();
 				
 			}
@@ -440,7 +489,7 @@ public final class RailPointTab extends ComboBoxTab<RailPoint> implements MouseL
 		return filler;
 		
 	}
-
+	
 	@Override
 	public void onModeSwitched() {
 		// TODO Auto-generated method stub

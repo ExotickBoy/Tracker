@@ -93,7 +93,7 @@ public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
 	@Override
 	public void draw(Graphics2D g) {
 		
-		AffineTransform affineTransform = getRailPointTransform();
+		AffineTransform affineTransform = getRailLocation().getRailPointTransform();
 		affineTransform.rotate(PI / 2);
 		AffineTransform innitialTransform = g.getTransform();
 		g.transform(affineTransform);
