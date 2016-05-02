@@ -107,7 +107,7 @@ public final class RailConnection extends CubicBezierCurve implements Serializab
 	public void draw(Graphics2D g) {
 		
 		if (railImage != null) {
-						
+			
 			for (int i = 0; i < directions.length; i++) {
 				
 				Vector2 p = positions[i];

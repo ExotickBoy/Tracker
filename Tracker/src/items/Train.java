@@ -354,7 +354,7 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	
 	private RailLocation getLocationBehind(RailLocation another) {
 		
-		return another.downRail(-TrainSection.TRAIN_LENGTH, been);
+		return another.alongRail(-TrainSection.TRAIN_LENGTH * TrainSection.ALONG_TRACK_LENGTH_MULTIPLYER, been);
 		
 	}
 	

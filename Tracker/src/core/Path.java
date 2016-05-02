@@ -2,7 +2,6 @@ package core;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.pow;
-import static java.lang.Math.sqrt;
 
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -140,21 +139,20 @@ public class Path implements Drawable {
 			
 			double d = train.getMaxDeceleration();
 			double a = train.getMaxAcceleration();
-			
-			if (a == d) {
+//			
+//			if (a == d) {
+//				
+//				brakeTo = sqrt(2) * sqrt(length);
+//				
+//			} else {
 				
-				brakeTo = sqrt(2) * sqrt(length);
-				
-			} else {
-				
-				double ac = -d + (2 * d * d) / (d - a) - (d * d * d - d * d * a) / (d * d - 2 * a * d + a * a);
+				double ac = ((a * d * d + d * d * d) / (a * a + 2 * a * d + d * d)) - ((2 * d * d) / (a + d)) + d;
 				double bc = 0;
-				double cc = 4 * length;
+				double cc = -2 * length;
 				
 				brakeTo = abs(RootFinder.quadraticRoots(ac, bc, cc)[0]);
-				System.out.println("der lol");
 				
-			}
+//			}
 			
 			accelerateTo = (d * brakeTo) / (a + d);
 			cruisTo = accelerateTo;
@@ -331,7 +329,7 @@ public class Path implements Drawable {
 								at.getConnection().isSameDirection(newConnection) ? newConnection.getTAtDistanceFromEnd(left) : newConnection.getTAtDistanceFromStart(left),
 								newConnection, at.getConnection().isSameDirection(newConnection) ? at.isForward() : !at.isForward());
 					}
-//					System.out.println("shy");
+					
 				}
 				
 			} else {

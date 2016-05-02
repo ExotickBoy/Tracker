@@ -54,6 +54,7 @@ public abstract class TrainSection implements Serializable, Drawable, OnRail, Se
 		
 	}
 	
+	public static final double ALONG_TRACK_LENGTH_MULTIPLYER = .98;
 	public static final int TRAIN_LENGTH = 60;
 	public static final int TRAIN_WIDTH = 30;
 	

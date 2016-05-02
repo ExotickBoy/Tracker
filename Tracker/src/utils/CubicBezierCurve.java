@@ -128,16 +128,12 @@ public class CubicBezierCurve implements Serializable {
 	
 	public double getDistanceFromStart(double t) {
 		
-		int startAt = (int) (t * getResolution());
-		double between = (t * getResolution() - startAt);
+		int startAt = (int) (t * (getResolution() - 1));
+		double between = (t * (getResolution() - 1) % 1);
 		
-		if (startAt + 1 >= tToLength.length) {
-			System.out.println("bad");
-			return tToLength[tToLength.length - 1];
+		if (t == 1) {
 			
-		} else if (t < 0) {
-			System.out.println("bad");
-			return 0;
+			return length;
 			
 		}
 		
@@ -187,9 +183,10 @@ public class CubicBezierCurve implements Serializable {
 			double gap = ending - beginning;
 			double difference = distance - beginning;
 			
-			return ((double) between / resolution) + difference / gap / resolution;
+			return ((double) between / (resolution - 1)) + difference / gap / (resolution - 1);
 			
 		}
+		
 	}
 	
 	public double getTAtDistanceFromEnd(double distance) {
