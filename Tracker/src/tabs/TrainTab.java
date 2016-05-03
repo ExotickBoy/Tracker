@@ -49,8 +49,8 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 	private static final String TAB_TITLE = "Trains";
 	private static final String NAME_PREFIX = "Train > ";
 	
-	private static final String ADD_BUTTON_TEXT = "Add";
-	private static final String REMOVE_BUTTON_TEXT = "Remove";
+	private static final String ADD_BUTTON_TEXT = "+";
+	private static final String REMOVE_BUTTON_TEXT = "-";
 	
 	private static final String PAUSE_BUTTON_TEXT = "❚❚";
 	private static final String RUN_BUTTON_TEXT = "►";
@@ -378,7 +378,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy = 0;
-		c.gridwidth = 2;
+		c.gridwidth = 4;
 		c.gridheight = 1;
 		c.weightx = 0;
 		c.weighty = 0;
@@ -388,7 +388,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy++;
-		c.gridwidth = 2;
+		c.gridwidth = 4;
 		c.gridheight = 1;
 		c.weightx = 0;
 		c.weighty = 0;
@@ -397,15 +397,15 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy++;
-		c.gridwidth = 1;
+		c.gridwidth = 2;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
 		c.insets = new Insets(0, 0, Driver.LAYOUT_MARGINS, 0);
 		view.add(new JLabel(SPEED_LABEL, SwingConstants.LEFT), c);
 		
-		c.gridx = 1;
-		c.gridwidth = 1;
+		c.gridx = 2;
+		c.gridwidth = 2;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
@@ -414,15 +414,15 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy++;
-		c.gridwidth = 1;
+		c.gridwidth = 2;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
 		c.insets = new Insets(0, 0, Driver.LAYOUT_MARGINS, 0);
 		view.add(new JLabel(MASS_LABEL, SwingConstants.LEFT), c);
 		
-		c.gridx = 1;
-		c.gridwidth = 1;
+		c.gridx = 2;
+		c.gridwidth = 2;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
@@ -431,15 +431,15 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy++;
-		c.gridwidth = 1;
+		c.gridwidth = 2;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
 		c.insets = new Insets(0, 0, Driver.LAYOUT_MARGINS, 0);
 		view.add(new JLabel(ACCELERATING_FORCE_LABEL, SwingConstants.LEFT), c);
 		
-		c.gridx = 1;
-		c.gridwidth = 1;
+		c.gridx = 2;
+		c.gridwidth = 2;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
@@ -448,15 +448,15 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy++;
-		c.gridwidth = 1;
+		c.gridwidth = 2;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
 		c.insets = new Insets(0, 0, Driver.LAYOUT_MARGINS, 0);
 		view.add(new JLabel(BRAKING_FORCE_LABEL, SwingConstants.LEFT), c);
 		
-		c.gridx = 1;
-		c.gridwidth = 1;
+		c.gridx = 2;
+		c.gridwidth = 2;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
@@ -465,7 +465,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy++;
-		c.gridwidth = 2;
+		c.gridwidth = 4;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
@@ -474,7 +474,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy++;
-		c.gridwidth = 2;
+		c.gridwidth = 4;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 1;
@@ -495,19 +495,18 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
-		c.insets = new Insets(Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS / 2, 0, 0);
+		c.insets = new Insets(Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS / 2, 0, Driver.LAYOUT_MARGINS / 2);
 		view.add(moveSectionDownButton, c);
 		
-		c.gridx = 0;
-		c.gridy++;
+		c.gridx = 2;
 		c.gridwidth = 1;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
-		c.insets = new Insets(Driver.LAYOUT_MARGINS, 0, 0, Driver.LAYOUT_MARGINS / 2);
+		c.insets = new Insets(Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS / 2, 0, Driver.LAYOUT_MARGINS / 2);
 		view.add(addSectionButton, c);
 		
-		c.gridx = 1;
+		c.gridx = 3;
 		c.gridwidth = 1;
 		c.gridheight = 1;
 		c.weightx = 1;
@@ -517,7 +516,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy++;
-		c.gridwidth = 2;
+		c.gridwidth = 4;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
@@ -528,7 +527,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy++;
-		c.gridwidth = 2;
+		c.gridwidth = 4;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
@@ -537,7 +536,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy++;
-		c.gridwidth = 2;
+		c.gridwidth = 4;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 1;
@@ -558,19 +557,18 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
-		c.insets = new Insets(Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS / 2, 0, 0);
+		c.insets = new Insets(Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS / 2, 0, Driver.LAYOUT_MARGINS / 2);
 		view.add(moveStopDownButton, c);
 		
-		c.gridx = 0;
-		c.gridy++;
+		c.gridx = 2;
 		c.gridwidth = 1;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
-		c.insets = new Insets(Driver.LAYOUT_MARGINS, 0, 0, Driver.LAYOUT_MARGINS / 2);
+		c.insets = new Insets(Driver.LAYOUT_MARGINS, Driver.LAYOUT_MARGINS / 2, 0, Driver.LAYOUT_MARGINS / 2);
 		view.add(addStopButton, c);
 		
-		c.gridx = 1;
+		c.gridx = 3;
 		c.gridwidth = 1;
 		c.gridheight = 1;
 		c.weightx = 1;
@@ -580,7 +578,7 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		
 		c.gridx = 0;
 		c.gridy++;
-		c.gridwidth = 2;
+		c.gridwidth = 4;
 		c.gridheight = 1;
 		c.weightx = 1;
 		c.weighty = 0;
