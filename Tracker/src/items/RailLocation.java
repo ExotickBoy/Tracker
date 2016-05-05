@@ -1,12 +1,12 @@
 package items;
 
 import static java.lang.Math.cos;
+import static java.lang.Math.signum;
 import static java.lang.Math.sin;
 
 import java.awt.geom.AffineTransform;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Optional;
 
 import utils.Vector2;
 
@@ -109,40 +109,35 @@ public final class RailLocation implements Serializable {
 		return new AffineTransform(cos(ang), -sin(ang), sin(ang), cos(ang), position.x, position.y);
 		
 	}
-		
+	
 	public RailLocation alongRail(double along, ArrayList<RailConnection> connections) {
 		
 		double trying = getConnection().getDistanceFromStart(getT()) + (isForward() ? -along : along);
+		int index = connections.indexOf(getConnection()) + 1;
 		
-		if (trying < 0) {
+		if (trying < 0 || trying > getConnection().getLength()) {
 			
-			double left = trying;
-			Optional<RailConnection> nextConnection = connections.stream().filter((connection) -> {
-				return (isForward() ? connection.has(getConnection().point2) : connection.has(getConnection().point1)) && connection != getConnection();
-			}).findFirst();
-			
-			if (nextConnection.isPresent()) {
+			if (index < connections.size()) {
 				
-				boolean newDirection = nextConnection.get().isSameDirection(getConnection()) ? isForward() : !isForward();
-				return new RailLocation(nextConnection.get().isSameDirection(getConnection()) ? 1 : 0, nextConnection.get(), newDirection).alongRail(left, connections);
+				RailConnection nextConnection = connections.get(index);
+				boolean newDirection = nextConnection.isSameDirection(getConnection()) ? isForward() : !isForward();
 				
-			} else {
+				double left = -signum(along);
+				double t;
 				
-				return this;
-				
-			}
-			
-		} else if (trying > getConnection().getLength()) {
-			
-			double left = getConnection().getLength() - trying;
-			Optional<RailConnection> nextConnection = connections.stream().filter((connection) -> {
-				return (isForward() ? connection.has(getConnection().point2) : connection.has(getConnection().point1)) && connection != getConnection();
-			}).findFirst();
-			
-			if (nextConnection.isPresent()) {
-				
-				boolean newDirection = nextConnection.get().isSameDirection(getConnection()) ? isForward() : !isForward();
-				return new RailLocation(nextConnection.get().isSameDirection(getConnection()) ? 0 : 1, nextConnection.get(), newDirection).alongRail(left, connections);
+				if (trying < 0) {
+					
+					left *= trying;
+					t = nextConnection.isSameDirection(getConnection()) ? 1 : 0;
+					
+				} else {
+					
+					left *= getConnection().getLength() - trying;
+					t = nextConnection.isSameDirection(getConnection()) ? 0 : 1;
+					
+				}
+								
+				return new RailLocation(t, nextConnection, newDirection).alongRail(left, connections);
 				
 			} else {
 				
@@ -155,6 +150,12 @@ public final class RailLocation implements Serializable {
 			return new RailLocation(getConnection().getTAtDistanceFromStart(trying), getConnection(), isForward());
 			
 		}
+		
+	}
+	
+	public boolean isSameConnection(RailLocation location) {
+		
+		return getConnection() == location.getConnection() && isForward() == location.isForward();
 		
 	}
 	

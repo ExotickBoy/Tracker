@@ -199,17 +199,21 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		moveSectionUpButton.addActionListener(e -> {
 			
 			int index = trainSectionList.getSelectedIndex();
-			TrainSection toMove = sectionListModel.getElementAt(index);
-			sectionListModel.removeElementAt(index);
-			sectionListModel.add(index - 1, toMove);
-			
-			active.getSections().remove(index);
-			active.getSections().add(index - 1, toMove);
-			
-			trainSectionList.setSelectedIndex(index - 1);
-			
-			active.recalculateSections();
-			Driver.frame.repaint();
+			if (index != -1) {
+				
+				TrainSection toMove = sectionListModel.getElementAt(index);
+				sectionListModel.removeElementAt(index);
+				sectionListModel.add(index - 1, toMove);
+				
+				active.getSections().remove(index);
+				active.getSections().add(index - 1, toMove);
+				
+				trainSectionList.setSelectedIndex(index - 1);
+				
+				active.recalculateSections();
+				Driver.frame.repaint();
+				
+			}
 			
 		});
 		
@@ -219,17 +223,21 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		moveSectionDownButton.addActionListener(e -> {
 			
 			int index = trainSectionList.getSelectedIndex();
-			TrainSection toMove = sectionListModel.getElementAt(index);
-			sectionListModel.removeElementAt(index);
-			sectionListModel.add(index + 1, toMove);
-			
-			active.getSections().remove(index);
-			active.getSections().add(index + 1, toMove);
-			
-			trainSectionList.setSelectedIndex(index + 1);
-			
-			active.recalculateSections();
-			Driver.frame.repaint();
+			if (index != -1) {
+				
+				TrainSection toMove = sectionListModel.getElementAt(index);
+				sectionListModel.removeElementAt(index);
+				sectionListModel.add(index + 1, toMove);
+				
+				active.getSections().remove(index);
+				active.getSections().add(index + 1, toMove);
+				
+				trainSectionList.setSelectedIndex(index + 1);
+				
+				active.recalculateSections();
+				Driver.frame.repaint();
+				
+			}
 			
 		});
 		
@@ -284,16 +292,21 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		moveStopUpButton.addActionListener(e -> {
 			
 			int index = trainStopList.getSelectedIndex();
-			TrainStop toMove = stopListModel.getElementAt(index);
-			stopListModel.removeElementAt(index);
-			stopListModel.add(index - 1, toMove);
 			
-			active.removeDestination(index);
-			active.addDestination(index - 1, toMove);
-			
-			trainStopList.setSelectedIndex(index - 1);
-			
-			Driver.frame.repaint();
+			if (index != -1) {
+				
+				TrainStop toMove = stopListModel.getElementAt(index);
+				stopListModel.removeElementAt(index);
+				stopListModel.add(index - 1, toMove);
+				
+				active.removeDestination(index);
+				active.addDestination(index - 1, toMove);
+				
+				trainStopList.setSelectedIndex(index - 1);
+				
+				Driver.frame.repaint();
+				
+			}
 			
 		});
 		
@@ -303,16 +316,20 @@ public class TrainTab extends ComboBoxTab<Train> implements MouseListener {
 		moveStopDownButton.addActionListener(e -> {
 			
 			int index = trainStopList.getSelectedIndex();
-			TrainStop toMove = stopListModel.getElementAt(index);
-			stopListModel.removeElementAt(index);
-			stopListModel.add(index + 1, toMove);
-			
-			active.removeDestination(index);
-			active.addDestination(index + 1, toMove);
-			
-			trainStopList.setSelectedIndex(index + 1);
-			
-			Driver.frame.repaint();
+			if (index != -1) {
+				
+				TrainStop toMove = stopListModel.getElementAt(index);
+				stopListModel.removeElementAt(index);
+				stopListModel.add(index + 1, toMove);
+				
+				active.removeDestination(index);
+				active.addDestination(index + 1, toMove);
+				
+				trainStopList.setSelectedIndex(index + 1);
+				
+				Driver.frame.repaint();
+				
+			}
 			
 		});
 		

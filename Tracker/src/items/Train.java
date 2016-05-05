@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import core.Path;
 import interfaces.Drawable;
@@ -20,7 +21,7 @@ import utils.Collider;
 
 public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	
-	private static final long serialVersionUID = 0L;
+	private static final long serialVersionUID = 1L;
 	
 	private static final String DEFAULT_TRAIN = "Train";
 	private static final Color NAME_LABLE_COLOR = Color.RED;
@@ -40,7 +41,7 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	private boolean running;
 	
 	private ArrayList<TrainSection> sections = new ArrayList<>();
-	private ArrayList<RailConnection> been = new ArrayList<>();
+	private ArrayList<RailLocation> been = new ArrayList<>();
 	
 	private ArrayList<TrainStop> rout = new ArrayList<>();
 	private RailLocation going;
@@ -107,10 +108,21 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 		
 		this.location = location;
 		
-		if (location != null) {
+		if (location != null && (been.size() == 0 || !been.get(0).isSameConnection(location))) {
 			
-			been.remove(location.getConnection());
-			been.add(0, location.getConnection());
+			been.add(0, location);
+			
+			int index = been.lastIndexOf(been.stream().filter(c -> {
+				
+				return c.isSameConnection(location);
+				
+			}).reduce((a, b) -> b).orElse(null));
+			
+			if (index > 0) {
+				
+				been.subList(index, been.size()).clear();
+				
+			}
 			
 		}
 		
@@ -354,7 +366,8 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 	
 	private RailLocation getLocationBehind(RailLocation another) {
 		
-		return another.alongRail(-TrainSection.TRAIN_LENGTH * TrainSection.ALONG_TRACK_LENGTH_MULTIPLYER, been);
+		return another.alongRail(-TrainSection.TRAIN_LENGTH * TrainSection.ALONG_TRACK_LENGTH_MULTIPLYER,
+				been.stream().map(RailLocation::getConnection).collect(Collectors.toCollection(ArrayList::new)));
 		
 	}
 	

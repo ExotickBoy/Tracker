@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
@@ -22,7 +23,7 @@ import utils.RootFinder;
 
 public class Path implements Drawable {
 	
-	private static final double METERS_PER_PIXEL = 15;
+	private static final double PIXEL_PER_METRES = 15;
 	
 	private static final String RED_ARROW_TEXTURE_PATH = "src/path_red.png";
 	private static final String AMBER_ARROW_TEXTURE_PATH = "src/path_amber.png";
@@ -45,9 +46,9 @@ public class Path implements Drawable {
 	ArrayList<RailLocation> connections;
 	Train train;
 	
-	boolean isFinished;
+	boolean isFinished = false;
 	
-	double lenghtInPixels;
+	double lengthInPixels;
 	double length;
 	
 	long startsTime;
@@ -56,14 +57,16 @@ public class Path implements Drawable {
 	double cruisTo;
 	double brakeTo;
 	
-	private double until;
-	
 	private double traveledInCruis;
 	private double traveledInDeceleration;
 	private double traveledInAcceleration;
 	
 	private RailLocation from;
 	private RailLocation to;
+	
+	private double traveled;
+	
+	private HashMap<Double, RailLocation> arrows = new HashMap<>();
 	
 	static {
 		
@@ -85,19 +88,29 @@ public class Path implements Drawable {
 		
 	}
 	
-	private Path(ArrayList<RailLocation> connections) {
+	private Path(ArrayList<RailLocation> connections, RailLocation from, RailLocation to) {
 		
 		this.connections = connections;
 		
-		from = connections.get(0);
-		to = connections.get(connections.size() - 1);
+		this.from = from;
+		this.to = to;
 		
-		lenghtInPixels = connections.stream().map(RailLocation::getConnection).mapToDouble(RailConnection::getLength).sum();
-		lenghtInPixels -= (from.isForward() ? 1 - from.getT() : from.getT()) * from.getConnection().getLength();
-		lenghtInPixels -= (to.isForward() ? to.getT() : 1 - to.getT()) * to.getConnection().getLength();
-		// System.out.println((to.isForward() ? 1 - to.getT() : to.getT()) * to.getConnection().getLength());
-		// System.out.println(to.getT() + " " + to.getConnection().length);
-		length = lenghtInPixels / METERS_PER_PIXEL;
+		lengthInPixels = connections.stream().map(RailLocation::getConnection).mapToDouble(RailConnection::getLength).sum();
+		lengthInPixels -= from.isForward() ? from.getConnection().getDistanceFromEnd(from.getT()) : from.getConnection().getDistanceFromStart(from.getT());
+		lengthInPixels -= to.isForward() ? to.getConnection().getDistanceFromStart(to.getT()) : to.getConnection().getDistanceFromEnd(to.getT());
+		length = lengthInPixels / PIXEL_PER_METRES;
+		
+		// arrow
+		
+		int amount = (int) ((length - traveled) * PIXEL_PER_METRES / SPACE_BETWEEN_ARROWS);
+		for (int i = 0; i <= amount; i++) {
+			
+			double along = (traveled - length) * i / amount;
+			RailLocation at = to.alongRail(along * PIXEL_PER_METRES,
+					connections.stream().map(RailLocation::getConnection).collect(ArrayList::new, (list, e) -> list.add(0, e), (list1, list2) -> list1.addAll(0, list2)));
+			arrows.put(along, at);
+			
+		}
 		
 	}
 	
@@ -133,26 +146,16 @@ public class Path implements Drawable {
 		
 		if (traveledInCruis < 0) {
 			
-			// double a = train.getMaxAcceleration() + train.getMaxDeceleration();
-			// double b = 0;
-			// double c = -2 * length;
-			
 			double d = train.getMaxDeceleration();
 			double a = train.getMaxAcceleration();
-//			
-//			if (a == d) {
-//				
-//				brakeTo = sqrt(2) * sqrt(length);
-//				
-//			} else {
-				
-				double ac = ((a * d * d + d * d * d) / (a * a + 2 * a * d + d * d)) - ((2 * d * d) / (a + d)) + d;
-				double bc = 0;
-				double cc = -2 * length;
-				
-				brakeTo = abs(RootFinder.quadraticRoots(ac, bc, cc)[0]);
-				
-//			}
+			
+			double ac = ((a * d * d + d * d * d) / (a * a + 2 * a * d + d * d)) - ((2 * d * d) / (a + d)) + d;
+			double bc = 0;
+			double cc = -2 * length;
+			
+			brakeTo = abs(RootFinder.quadraticRoots(ac, bc, cc)[0]);
+			
+			// }
 			
 			accelerateTo = (d * brakeTo) / (a + d);
 			cruisTo = accelerateTo;
@@ -166,7 +169,6 @@ public class Path implements Drawable {
 		double timePassed = (time - startsTime) / 1000.; // s
 		
 		double speed = 0; // m/s
-		double traveled = 0; // metres
 		
 		if (timePassed < accelerateTo) {
 			
@@ -190,26 +192,41 @@ public class Path implements Drawable {
 			
 		}
 		
+		if (isFinished) {
+			
+			train.setRailLocation(to);
+			
+		} else {
+			
+			train.setRailLocation(
+					from.alongRail(traveled * PIXEL_PER_METRES, connections.stream().map(RailLocation::getConnection).collect(Collectors.toCollection(ArrayList::new))));
+			
+		}
+		train.recalculateSections();
 		train.setSpeed(speed);
 		
-		until = traveled * METERS_PER_PIXEL + ((from.isForward() ? 1 - from.getT() : from.getT()) * from.getConnection().getLength());
-		connections.stream().anyMatch((connection) -> {
+	}
+	
+	public boolean isFinished() {
+		
+		return isFinished;
+		
+	}
+	
+	@Override
+	public void draw(Graphics2D g) {
+		
+		arrows.entrySet().stream().filter((p) -> {
+			return length + p.getKey() > traveled;
+		}).forEach(p -> {
 			
-			until -= connection.getConnection().getLength();
+			AffineTransform before = g.getTransform();
+			AffineTransform transfrom = p.getValue().getRailPointTransform();
+			g.transform(transfrom);
 			
-			if (until < 0) {
-				
-				train.setRailLocation(
-						new RailLocation(connection.isForward() ? (-until / connection.getConnection().getLength()) : 1 - (-until / connection.getConnection().getLength()),
-								connection.getConnection(), connection.isForward()));
-				train.recalculateSections();
-				return true;
-				
-			} else {
-				
-				return false;
-				
-			}
+			g.drawImage(colorToImage.get(1), -ARROW_WIDTH / 2, 0, ARROW_WIDTH, ARROW_LENGTH, null);
+			
+			g.setTransform(before);
 			
 		});
 		
@@ -226,7 +243,7 @@ public class Path implements Drawable {
 			
 		} else {
 			
-			return new Path(connections);
+			return new Path(connections, from, to);
 			
 		}
 		
@@ -236,7 +253,7 @@ public class Path implements Drawable {
 		
 		if (from.getConnection() == to.getConnection() && from.isForward() == to.isForward() && //
 				((to.isForward() && to.getT() < from.getT()) || (!to.isForward() && to.getT() > from.getT()))) {
-				
+			
 			been.add(to);
 			return been;
 			
@@ -273,93 +290,8 @@ public class Path implements Drawable {
 				
 				return Double.compare(a.stream().map(RailLocation::getConnection).mapToDouble(RailConnection::getLength).sum(),
 						b.stream().map(RailLocation::getConnection).mapToDouble(RailConnection::getLength).sum());
-						
+				
 			}).orElse(null);
-			
-		}
-		
-	}
-	
-	public boolean isFinished() {
-		
-		return isFinished;
-		
-	}
-	
-	@Override
-	public void draw(Graphics2D g) {
-		
-		int amount = (int) (length * METERS_PER_PIXEL / SPACE_BETWEEN_ARROWS);
-		
-		int index = 1;
-		RailLocation at = from;
-		for (int i = 0; i < amount; i++) {
-			
-			AffineTransform before = g.getTransform();
-			AffineTransform transfrom = at.getRailPointTransform();
-			g.transform(transfrom);
-			
-			g.drawImage(colorToImage.get(1), -ARROW_WIDTH / 2, 0, ARROW_WIDTH, ARROW_LENGTH, null);
-			
-			g.setTransform(before);
-			
-			double left = length * METERS_PER_PIXEL / amount;
-			
-			if (at.isForward()) {
-				
-				if (at.getConnection().getDistanceFromStart(at.getT()) > left) {
-					
-					at = new RailLocation(at.getConnection().getTAtDistanceFromStart(at.getConnection().getDistanceFromStart(at.getT()) - left), at.getConnection(),
-							at.isForward());
-							
-				} else {
-					
-					left -= at.getConnection().getDistanceFromStart(at.getT());
-					
-					RailConnection newConnection;
-					
-					if (index == connections.size()) {
-						
-						break;
-						
-					} else {
-						
-						newConnection = connections.get(index++).getConnection();
-						at = new RailLocation(
-								at.getConnection().isSameDirection(newConnection) ? newConnection.getTAtDistanceFromEnd(left) : newConnection.getTAtDistanceFromStart(left),
-								newConnection, at.getConnection().isSameDirection(newConnection) ? at.isForward() : !at.isForward());
-					}
-					
-				}
-				
-			} else {
-				
-				if (at.getConnection().getDistanceFromEnd(at.getT()) > left) {
-					
-					at = new RailLocation(at.getConnection().getTAtDistanceFromStart(at.getConnection().getDistanceFromStart(at.getT()) + left), at.getConnection(),
-							at.isForward());
-							
-				} else {
-					
-					left -= at.getConnection().getDistanceFromEnd(at.getT());
-					
-					RailConnection newConnection;
-					
-					if (index == connections.size()) {
-						
-						break;
-						
-					} else {
-						
-						newConnection = connections.get(index++).getConnection();
-						at = new RailLocation(
-								at.getConnection().isSameDirection(newConnection) ? newConnection.getTAtDistanceFromStart(left) : newConnection.getTAtDistanceFromEnd(left),
-								newConnection, at.getConnection().isSameDirection(newConnection) ? at.isForward() : !at.isForward());
-					}
-					
-				}
-				
-			}
 			
 		}
 		
