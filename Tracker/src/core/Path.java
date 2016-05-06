@@ -43,19 +43,25 @@ public class Path implements Drawable {
 	
 	private static HashMap<Integer, BufferedImage> colorToImage = new HashMap<>();
 	
-	ArrayList<RailLocation> connections;
-	Train train;
+	private ArrayList<RailLocation> connections;
+	private Train train;
 	
-	boolean isFinished = false;
+	private boolean isFinished = false;
 	
-	double lengthInPixels;
-	double length;
+	private double lengthInPixels;
+	private double length;
 	
-	long startsTime;
+	private double traveled;
+	private double speed;
 	
-	double accelerateTo;
-	double cruisTo;
-	double brakeTo;
+	private double acc;
+	private double dcc;
+	
+	private long startsTime;
+	
+	private double accelerateTo;
+	private double cruisTo;
+	private double brakeTo;
 	
 	private double traveledInCruis;
 	private double traveledInDeceleration;
@@ -63,8 +69,6 @@ public class Path implements Drawable {
 	
 	private RailLocation from;
 	private RailLocation to;
-	
-	private double traveled;
 	
 	private HashMap<Double, RailLocation> arrows = new HashMap<>();
 	
@@ -118,6 +122,9 @@ public class Path implements Drawable {
 		
 		this.startsTime = startTime;
 		
+		traveled = 0;
+		updatePlot(train);
+		
 		System.out.println("starting");
 		
 	}
@@ -132,13 +139,20 @@ public class Path implements Drawable {
 		
 		this.train = train;
 		
-		double accelerationTime = (Train.MAX_SPEED / train.getMaxAcceleration());
-		double decelerationTime = (Train.MAX_SPEED / train.getMaxDeceleration());
+	}
+	
+	public void updatePlot(Train train) {
+		
+		acc = train.getMaxAcceleration();
+		dcc = train.getMaxDeceleration();
+		
+		double accelerationTime = (Train.MAX_SPEED / acc);
+		double decelerationTime = (Train.MAX_SPEED / dcc);
 		
 		accelerateTo = accelerationTime;
 		
-		traveledInAcceleration = .5 * train.getMaxAcceleration() * pow(accelerationTime, 2);
-		traveledInDeceleration = .5 * train.getMaxDeceleration() * pow(decelerationTime, 2);
+		traveledInAcceleration = .5 * acc * pow(accelerationTime, 2);
+		traveledInDeceleration = .5 * dcc * pow(decelerationTime, 2);
 		traveledInCruis = length - (traveledInAcceleration + traveledInDeceleration);
 		
 		cruisTo = (traveledInCruis / Train.MAX_SPEED) + accelerateTo;
@@ -146,16 +160,14 @@ public class Path implements Drawable {
 		
 		if (traveledInCruis < 0) {
 			
-			double d = train.getMaxDeceleration();
-			double a = train.getMaxAcceleration();
+			double d = dcc;
+			double a = acc;
 			
 			double ac = ((a * d * d + d * d * d) / (a * a + 2 * a * d + d * d)) - ((2 * d * d) / (a + d)) + d;
 			double bc = 0;
 			double cc = -2 * length;
 			
 			brakeTo = abs(RootFinder.quadraticRoots(ac, bc, cc)[0]);
-			
-			// }
 			
 			accelerateTo = (d * brakeTo) / (a + d);
 			cruisTo = accelerateTo;
@@ -168,31 +180,10 @@ public class Path implements Drawable {
 		
 		double timePassed = (time - startsTime) / 1000.; // s
 		
-		double speed = 0; // m/s
+		speed = timePassedToSpeed(timePassed);
+		traveled = timePassedToTraveled(timePassed);
 		
-		if (timePassed < accelerateTo) {
-			
-			speed = timePassed * train.getMaxAcceleration();
-			traveled = .5 * train.getMaxAcceleration() * pow(timePassed, 2);
-			
-		} else if (timePassed < cruisTo) {
-			
-			speed = Train.MAX_SPEED;
-			traveled = .5 * train.getMaxAcceleration() * pow(accelerateTo, 2) + Train.MAX_SPEED * (timePassed - accelerateTo);
-			
-		} else if (timePassed < brakeTo) {
-			
-			speed = (brakeTo - timePassed) * train.getMaxDeceleration();
-			traveled = length - .5 * train.getMaxDeceleration() * pow(timePassed - brakeTo, 2);
-			
-		} else {
-			
-			traveled = length;
-			isFinished = true;
-			
-		}
-		
-		if (isFinished) {
+		if (isFinished = timePassed > brakeTo) {
 			
 			train.setRailLocation(to);
 			
@@ -204,6 +195,50 @@ public class Path implements Drawable {
 		}
 		train.recalculateSections();
 		train.setSpeed(speed);
+		
+	}
+	
+	private double timePassedToTraveled(double timePassed) {
+		
+		if (timePassed < accelerateTo) {
+			
+			return .5 * acc * pow(timePassed, 2);
+			
+		} else if (timePassed < cruisTo) {
+			
+			return .5 * acc * pow(accelerateTo, 2) + Train.MAX_SPEED * (timePassed - accelerateTo);
+			
+		} else if (timePassed < brakeTo) {
+			
+			return length - .5 * dcc * pow(timePassed - brakeTo, 2);
+			
+		} else {
+			
+			return length;
+			
+		}
+		
+	}
+	
+	private double timePassedToSpeed(double timePassed) {
+		
+		if (timePassed < accelerateTo) {
+			
+			return timePassed * acc;
+			
+		} else if (timePassed < cruisTo) {
+			
+			return Train.MAX_SPEED;
+			
+		} else if (timePassed < brakeTo) {
+			
+			return (brakeTo - timePassed) * dcc;
+			
+		} else {
+			
+			return traveled = length;
+			
+		}
 		
 	}
 	

@@ -251,18 +251,37 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 		section.train = this;
 		getSections().add(section);
 		
+		if (path != null) {
+			
+			path.updatePlot(this);
+			
+		}
+		
 	}
 	
 	public void removeSection(int sectionIndex) {
 		
 		getSections().remove(sectionIndex);
 		recalculateSections();
+		
+		if (path != null) {
+			
+			path.updatePlot(this);
+			
+		}
+		
 	}
 	
 	public void removeSection(TrainSection section) {
 		
 		getSections().remove(getSections());
 		recalculateSections();
+		
+		if (path != null) {
+			
+			path.updatePlot(this);
+			
+		}
 		
 	}
 	
@@ -290,8 +309,8 @@ public final class Train implements Serializable, Drawable, OnRail, Selectable {
 		
 		if (running && path != null && path.getStartTime() == 0) {
 			
-			path.setStartTime(time);
 			path.setTrain(this);
+			path.setStartTime(time);
 			
 		} else if (running && path != null && path.getStartTime() != 0) {
 			

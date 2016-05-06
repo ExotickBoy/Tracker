@@ -14,6 +14,7 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
+import core.Driver;
 import interfaces.Drawable;
 import interfaces.OnRail;
 import interfaces.Selectable;
@@ -22,6 +23,8 @@ import utils.Vector2;
 import utils.Collider.Triangle;
 
 public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
+	
+	private static final int LENGTH_OF_COLOR_CYCLE = 2500; // ms
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -43,10 +46,12 @@ public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
 	
 	private static HashMap<Integer, BufferedImage> colorToImage = new HashMap<>();
 	
-	RailLocation location;
+	private RailLocation location;
 	private boolean willDrawCollider;
-	boolean decided;
-	int color;
+	private boolean decided;
+	private int color;
+	
+	private static long startTime;
 	
 	static {
 		
@@ -74,6 +79,12 @@ public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
 		decided = false;
 		color = RED_COLOR;
 		
+		if (startTime != 0) {
+			
+			startTime = System.currentTimeMillis();
+			
+		}
+		
 	}
 	
 	@Override
@@ -92,6 +103,12 @@ public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
 	
 	@Override
 	public void draw(Graphics2D g) {
+		
+		if (!decided && Driver.mode == Driver.RUNNING_MODE) {
+			System.out.println("badad bam");
+			color = (int) (3 * ((System.currentTimeMillis() - startTime) % LENGTH_OF_COLOR_CYCLE) / LENGTH_OF_COLOR_CYCLE);
+			System.out.println(color);
+		}
 		
 		AffineTransform affineTransform = getRailLocation().getRailPointTransform();
 		affineTransform.rotate(PI / 2);
