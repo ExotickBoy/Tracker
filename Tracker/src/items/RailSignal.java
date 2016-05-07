@@ -24,7 +24,7 @@ import utils.Collider.Triangle;
 
 public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
 	
-	private static final int LENGTH_OF_COLOR_CYCLE = 2500; // ms
+	private static final int LENGTH_OF_COLOR_CYCLE = 1500; // ms
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -105,9 +105,9 @@ public class RailSignal implements Serializable, Drawable, OnRail, Selectable {
 	public void draw(Graphics2D g) {
 		
 		if (!decided && Driver.mode == Driver.RUNNING_MODE) {
-			System.out.println("badad bam");
+			
 			color = (int) (3 * ((System.currentTimeMillis() - startTime) % LENGTH_OF_COLOR_CYCLE) / LENGTH_OF_COLOR_CYCLE);
-			System.out.println(color);
+			
 		}
 		
 		AffineTransform affineTransform = getRailLocation().getRailPointTransform();

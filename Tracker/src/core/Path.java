@@ -23,7 +23,7 @@ import utils.RootFinder;
 
 public class Path implements Drawable {
 	
-	private static final double PIXEL_PER_METRES = 15;
+	private static final double METRES_PER_PIXEL = 15;
 	
 	private static final String RED_ARROW_TEXTURE_PATH = "src/path_red.png";
 	private static final String AMBER_ARROW_TEXTURE_PATH = "src/path_amber.png";
@@ -102,15 +102,15 @@ public class Path implements Drawable {
 		lengthInPixels = connections.stream().map(RailLocation::getConnection).mapToDouble(RailConnection::getLength).sum();
 		lengthInPixels -= from.isForward() ? from.getConnection().getDistanceFromEnd(from.getT()) : from.getConnection().getDistanceFromStart(from.getT());
 		lengthInPixels -= to.isForward() ? to.getConnection().getDistanceFromStart(to.getT()) : to.getConnection().getDistanceFromEnd(to.getT());
-		length = lengthInPixels / PIXEL_PER_METRES;
+		length = lengthInPixels / METRES_PER_PIXEL;
 		
 		// arrow
 		
-		int amount = (int) ((length - traveled) * PIXEL_PER_METRES / SPACE_BETWEEN_ARROWS);
+		int amount = (int) ((length - traveled) * METRES_PER_PIXEL / SPACE_BETWEEN_ARROWS);
 		for (int i = 0; i <= amount; i++) {
 			
 			double along = (traveled - length) * i / amount;
-			RailLocation at = to.alongRail(along * PIXEL_PER_METRES,
+			RailLocation at = to.alongRail(along * METRES_PER_PIXEL,
 					connections.stream().map(RailLocation::getConnection).collect(ArrayList::new, (list, e) -> list.add(0, e), (list1, list2) -> list1.addAll(0, list2)));
 			arrows.put(along, at);
 			
@@ -190,7 +190,7 @@ public class Path implements Drawable {
 		} else {
 			
 			train.setRailLocation(
-					from.alongRail(traveled * PIXEL_PER_METRES, connections.stream().map(RailLocation::getConnection).collect(Collectors.toCollection(ArrayList::new))));
+					from.alongRail(traveled * METRES_PER_PIXEL, connections.stream().map(RailLocation::getConnection).collect(Collectors.toCollection(ArrayList::new))));
 			
 		}
 		train.recalculateSections();
@@ -327,6 +327,123 @@ public class Path implements Drawable {
 						b.stream().map(RailLocation::getConnection).mapToDouble(RailConnection::getLength).sum());
 				
 			}).orElse(null);
+			
+		}
+		
+	}
+	
+	private class Movement {
+		
+		private static final double MAX_SPEED = Train.MAX_SPEED;
+		
+		private double startSpeed;
+		private double endSpeed;
+		
+		private double distance;
+		private double traveledOffset;
+		private double duration;
+		
+		private double accelerateTo;
+		private double brakeFrom;
+		
+		private double acceleration;
+		private double deceleration;
+		
+		private double x1;
+		private double x2;
+		private double y1;
+		private double y2;
+		
+		private double cc;
+		
+		public Movement(double startSpeed, double endSpeed, double distance, double traveledOffset, double acceleration, double deceleration) {
+			
+			this.acceleration = acceleration;
+			this.deceleration = deceleration;
+			
+			this.traveledOffset = traveledOffset;
+			
+			this.startSpeed = startSpeed;
+			this.endSpeed = endSpeed;
+			this.distance = distance;
+			
+			x1 = -MAX_SPEED / acceleration;
+			y1 = -.5 * acceleration * x1 * x1;
+			
+			x2 = MAX_SPEED / deceleration;
+			y2 = -.5 * deceleration * x2 * x2;
+			
+			double timeInAcceleration = (MAX_SPEED - startSpeed) / acceleration;
+			double timeInDeceleration = (MAX_SPEED - endSpeed) / deceleration;
+			
+			double m1 = (startSpeed + acceleration * x1) / acceleration;
+			double m2 = (endSpeed + deceleration * x2) / deceleration;
+			
+			double traveledInAcceleration = .5 * acceleration * (m1 - x1) + y1;
+			double traveledInDeceleration = .5 * deceleration * (m2 - x2) + y2;
+			
+			if (timeInAcceleration + timeInDeceleration > distance) {
+				
+				// likely to be the real rak
+				
+			} else {
+				
+				cc -= .5 * acceleration * (m1 - x1) + y1;
+				
+				y1 += cc;
+				x1 += m1;
+				
+				x2 += (endSpeed - deceleration * x2) / deceleration;
+				y2 += cc;
+				
+				double traveledInCruis = distance - traveledInAcceleration - traveledInDeceleration;
+				
+				x2 += traveledInCruis / MAX_SPEED;
+				y2 += traveledInCruis;
+				
+			}
+			
+		}
+		
+		public double getDuration() {
+			
+			return duration;
+			
+		}
+		
+		public double getTraveledAtTime(double timePassed) {
+			
+			if (timePassed < accelerateTo) {
+				
+				return .5 * acceleration * pow(timePassed - x1, 2) + y1;
+				
+			} else if (timePassed > brakeFrom) {
+				
+				return MAX_SPEED * timePassed + cc;
+				
+			} else {
+				
+				return .5 * deceleration * pow(timePassed - x2, 2) + y2;
+				
+			}
+			
+		}
+		
+		public double getSpeedAtTime(double timePassed) {
+			
+			if (timePassed < accelerateTo) {
+				
+				return startSpeed + acceleration * timePassed;
+				
+			} else if (timePassed > brakeFrom) {
+				
+				return MAX_SPEED;
+				
+			} else {
+				
+				return endSpeed - deceleration * (duration - timePassed);
+				
+			}
 			
 		}
 		
