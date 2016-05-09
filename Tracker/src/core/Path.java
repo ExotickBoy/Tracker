@@ -1,6 +1,5 @@
 package core;
 
-import static java.lang.Math.abs;
 import static java.lang.Math.pow;
 
 import java.awt.Graphics2D;
@@ -9,9 +8,11 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.imageio.ImageIO;
 
@@ -33,6 +34,10 @@ public class Path implements Drawable {
 	private static final int AMBER_COLOR = 1;
 	private static final int GREEN_COLOR = 2;
 	
+	private static final int ACCELERATING_COLOR = AMBER_COLOR;
+	private static final int CRUISING_COLOR = GREEN_COLOR;
+	private static final int DECELERATING_COLOR = AMBER_COLOR;
+	
 	private static final int ARROW_WIDTH = 30;
 	private static final int ARROW_LENGTH = 15;
 	private static final double SPACE_BETWEEN_ARROWS = 30;
@@ -51,26 +56,18 @@ public class Path implements Drawable {
 	private double lengthInPixels;
 	private double length;
 	
+	private long startsTime;
 	private double traveled;
 	private double speed;
-	
-	private double acc;
-	private double dcc;
-	
-	private long startsTime;
-	
-	private double accelerateTo;
-	private double cruisTo;
-	private double brakeTo;
-	
-	private double traveledInCruis;
-	private double traveledInDeceleration;
-	private double traveledInAcceleration;
 	
 	private RailLocation from;
 	private RailLocation to;
 	
-	private HashMap<Double, RailLocation> arrows = new HashMap<>();
+	private ArrayList<Integer> arrowColors = new ArrayList<>();
+	private ArrayList<Double> arrowDistances = new ArrayList<>();
+	private ArrayList<RailLocation> arrowLocations = new ArrayList<>();
+	
+	private ArrayList<Movement> movements = new ArrayList<>();
 	
 	static {
 		
@@ -106,13 +103,15 @@ public class Path implements Drawable {
 		
 		// arrow
 		
-		int amount = (int) ((length - traveled) * METRES_PER_PIXEL / SPACE_BETWEEN_ARROWS);
+		int amount = (int) (length * METRES_PER_PIXEL / SPACE_BETWEEN_ARROWS);
 		for (int i = 0; i <= amount; i++) {
 			
-			double along = (traveled - length) * i / amount;
+			double along = -length * i / amount;
 			RailLocation at = to.alongRail(along * METRES_PER_PIXEL,
 					connections.stream().map(RailLocation::getConnection).collect(ArrayList::new, (list, e) -> list.add(0, e), (list1, list2) -> list1.addAll(0, list2)));
-			arrows.put(along, at);
+			arrowDistances.add(along);
+			arrowLocations.add(at);
+			arrowColors.add(AMBER_COLOR);
 			
 		}
 		
@@ -143,36 +142,50 @@ public class Path implements Drawable {
 	
 	public void updatePlot(Train train) {
 		
-		acc = train.getMaxAcceleration();
-		dcc = train.getMaxDeceleration();
+		movements.clear();
+		movements.add(new Movement(0, 0, length, 0, 0, train.getMaxAcceleration(), train.getMaxDeceleration()));
 		
-		double accelerationTime = (Train.MAX_SPEED / acc);
-		double decelerationTime = (Train.MAX_SPEED / dcc);
-		
-		accelerateTo = accelerationTime;
-		
-		traveledInAcceleration = .5 * acc * pow(accelerationTime, 2);
-		traveledInDeceleration = .5 * dcc * pow(decelerationTime, 2);
-		traveledInCruis = length - (traveledInAcceleration + traveledInDeceleration);
-		
-		cruisTo = (traveledInCruis / Train.MAX_SPEED) + accelerateTo;
-		brakeTo = cruisTo + decelerationTime;
-		
-		if (traveledInCruis < 0) {
+		IntStream.range(0, arrowDistances.size()).forEach((i) -> {
 			
-			double d = dcc;
-			double a = acc;
+			double distance = -arrowDistances.get(i);
 			
-			double ac = ((a * d * d + d * d * d) / (a * a + 2 * a * d + d * d)) - ((2 * d * d) / (a + d)) + d;
-			double bc = 0;
-			double cc = -2 * length;
+			movements.stream().filter((movement) -> {
+				
+				return movement.getTraveledOffset() <= distance && distance <= movement.getTraveledOffset() + movement.getDistance();
+				
+			}).findFirst().ifPresent(movement -> {
+				
+				int color;
+				
+				switch (movement.getStateAtTraveled(distance)) {
+					
+					case Movement.ACCELERATING_STATE:
+						
+						color = ACCELERATING_COLOR;
+						break;
+					
+					case Movement.CRUISING_STATE:
+						
+						color = CRUISING_COLOR;
+						break;
+					
+					case Movement.DECELERATING_STATE:
+						
+						color = DECELERATING_COLOR;
+						break;
+					
+					default:
+						
+						color = AMBER_COLOR;
+						break;
+					
+				}
+				
+				arrowColors.set(i, color);
+				
+			});
 			
-			brakeTo = abs(RootFinder.quadraticRoots(ac, bc, cc)[0]);
-			
-			accelerateTo = (d * brakeTo) / (a + d);
-			cruisTo = accelerateTo;
-			
-		}
+		});
 		
 	}
 	
@@ -180,65 +193,34 @@ public class Path implements Drawable {
 		
 		double timePassed = (time - startsTime) / 1000.; // s
 		
-		speed = timePassedToSpeed(timePassed);
-		traveled = timePassedToTraveled(timePassed);
+		double ends = movements.stream().mapToDouble(Movement::getDuration).sum();
 		
-		if (isFinished = timePassed > brakeTo) {
+		if (ends <= timePassed) {
 			
 			train.setRailLocation(to);
+			train.setSpeed(0);
+			isFinished = true;
 			
 		} else {
 			
+			speed = movements.stream().filter((movement) -> {
+				
+				return movement.getStartTime() < timePassed && timePassed < movement.getEndTime();
+				
+			}).findFirst().get().getSpeedAtTime(timePassed);
+			
+			traveled = movements.stream().filter((movement) -> {
+				
+				return movement.getStartTime() < timePassed && timePassed < movement.getEndTime();
+				
+			}).findFirst().get().getTraveledAtTime(timePassed);
+			
+			train.setSpeed(speed);
 			train.setRailLocation(
 					from.alongRail(traveled * METRES_PER_PIXEL, connections.stream().map(RailLocation::getConnection).collect(Collectors.toCollection(ArrayList::new))));
 			
 		}
 		train.recalculateSections();
-		train.setSpeed(speed);
-		
-	}
-	
-	private double timePassedToTraveled(double timePassed) {
-		
-		if (timePassed < accelerateTo) {
-			
-			return .5 * acc * pow(timePassed, 2);
-			
-		} else if (timePassed < cruisTo) {
-			
-			return .5 * acc * pow(accelerateTo, 2) + Train.MAX_SPEED * (timePassed - accelerateTo);
-			
-		} else if (timePassed < brakeTo) {
-			
-			return length - .5 * dcc * pow(timePassed - brakeTo, 2);
-			
-		} else {
-			
-			return length;
-			
-		}
-		
-	}
-	
-	private double timePassedToSpeed(double timePassed) {
-		
-		if (timePassed < accelerateTo) {
-			
-			return timePassed * acc;
-			
-		} else if (timePassed < cruisTo) {
-			
-			return Train.MAX_SPEED;
-			
-		} else if (timePassed < brakeTo) {
-			
-			return (brakeTo - timePassed) * dcc;
-			
-		} else {
-			
-			return traveled = length;
-			
-		}
 		
 	}
 	
@@ -251,15 +233,17 @@ public class Path implements Drawable {
 	@Override
 	public void draw(Graphics2D g) {
 		
-		arrows.entrySet().stream().filter((p) -> {
-			return length + p.getKey() > traveled;
-		}).forEach(p -> {
+		IntStream.range(0, arrowLocations.size()).filter((i) -> {
+			
+			return length + arrowDistances.get(i) > traveled;
+			
+		}).forEach((i) -> {
 			
 			AffineTransform before = g.getTransform();
-			AffineTransform transfrom = p.getValue().getRailPointTransform();
+			AffineTransform transfrom = arrowLocations.get(i).getRailPointTransform();
 			g.transform(transfrom);
 			
-			g.drawImage(colorToImage.get(1), -ARROW_WIDTH / 2, 0, ARROW_WIDTH, ARROW_LENGTH, null);
+			g.drawImage(colorToImage.get(arrowColors.get(i)), -ARROW_WIDTH / 2, 0, ARROW_WIDTH, ARROW_LENGTH, null);
 			
 			g.setTransform(before);
 			
@@ -336,11 +320,17 @@ public class Path implements Drawable {
 		
 		private static final double MAX_SPEED = Train.MAX_SPEED;
 		
+		private static final int ACCELERATING_STATE = 0;
+		private static final int CRUISING_STATE = 1;
+		private static final int DECELERATING_STATE = 2;
+		
 		private double startSpeed;
 		private double endSpeed;
 		
-		private double distance;
 		private double traveledOffset;
+		private double startTime;
+		
+		private double distance;
 		private double duration;
 		
 		private double accelerateTo;
@@ -356,22 +346,23 @@ public class Path implements Drawable {
 		
 		private double cc;
 		
-		public Movement(double startSpeed, double endSpeed, double distance, double traveledOffset, double acceleration, double deceleration) {
+		public Movement(double startSpeed, double endSpeed, double distance, double startTime, double traveledOffset, double acceleration, double deceleration) {
 			
 			this.acceleration = acceleration;
 			this.deceleration = deceleration;
 			
 			this.traveledOffset = traveledOffset;
+			this.startTime = startTime;
 			
 			this.startSpeed = startSpeed;
 			this.endSpeed = endSpeed;
 			this.distance = distance;
 			
-			x1 = -MAX_SPEED / acceleration;
+			x1 = -startSpeed / acceleration;
 			y1 = -.5 * acceleration * x1 * x1;
 			
-			x2 = MAX_SPEED / deceleration;
-			y2 = -.5 * deceleration * x2 * x2;
+			x2 = (MAX_SPEED - endSpeed) / deceleration;
+			y2 = .5 * deceleration * x2 * x2;
 			
 			double timeInAcceleration = (MAX_SPEED - startSpeed) / acceleration;
 			double timeInDeceleration = (MAX_SPEED - endSpeed) / deceleration;
@@ -379,29 +370,53 @@ public class Path implements Drawable {
 			double m1 = (startSpeed + acceleration * x1) / acceleration;
 			double m2 = (endSpeed + deceleration * x2) / deceleration;
 			
-			double traveledInAcceleration = .5 * acceleration * (m1 - x1) + y1;
-			double traveledInDeceleration = .5 * deceleration * (m2 - x2) + y2;
+			double traveledInAcceleration = .5 * acceleration * pow(m1 - x1, 2) + y1; // this is wrong but works ?!
+			double traveledInDeceleration = .5 * deceleration * pow(m2 - x2, 2) + y2;
 			
-			if (timeInAcceleration + timeInDeceleration > distance) {
+			if (traveledInAcceleration + traveledInDeceleration > distance) {
 				
 				// likely to be the real rak
 				
+				double a = acceleration;
+				double d = deceleration;
+				double i = x1;
+				double j = y1;
+				double l = y2;
+				
+				double aq = -a - (a * a) / d;
+				double bq = 2 * a * i + (2 * a * a * i) / d;
+				double cq = (-a * a * i * i) / d + 2 * l - 2 * j - a * i * i;
+				
+				double[] solutions = RootFinder.quadraticRoots(aq, bq, cq);
+				System.out.println(Arrays.toString(solutions));
+				
+				accelerateTo = solutions[0];
+				brakeFrom = accelerateTo;
+				
+				x2 = (a * accelerateTo + d * accelerateTo - a * i) / d;
+				duration = x2 - (MAX_SPEED / deceleration) + timeInDeceleration;
+				
 			} else {
 				
-				cc -= .5 * acceleration * (m1 - x1) + y1;
+				cc = -.5 * acceleration * pow((MAX_SPEED - startSpeed) / acceleration, 2);
 				
-				y1 += cc;
-				x1 += m1;
-				
-				x2 += (endSpeed - deceleration * x2) / deceleration;
-				y2 += cc;
+				accelerateTo = timeInAcceleration;
 				
 				double traveledInCruis = distance - traveledInAcceleration - traveledInDeceleration;
 				
-				x2 += traveledInCruis / MAX_SPEED;
 				y2 += traveledInCruis;
+				x2 += traveledInCruis / MAX_SPEED - cc / MAX_SPEED;
+				
+				brakeFrom = x2 - timeInDeceleration;
+				duration = x2 - (MAX_SPEED / deceleration) + timeInDeceleration;
 				
 			}
+			
+		}
+		
+		public double getTraveledOffset() {
+			
+			return traveledOffset;
 			
 		}
 		
@@ -411,19 +426,27 @@ public class Path implements Drawable {
 			
 		}
 		
+		public double getDistance() {
+			
+			return distance;
+			
+		}
+		
 		public double getTraveledAtTime(double timePassed) {
 			
-			if (timePassed < accelerateTo) {
+			timePassed -= startTime;
+			
+			if (timePassed < accelerateTo) { // acceleration
 				
-				return .5 * acceleration * pow(timePassed - x1, 2) + y1;
+				return traveledOffset + .5 * acceleration * pow(timePassed - x1, 2) + y1;
 				
-			} else if (timePassed > brakeFrom) {
+			} else if (timePassed > brakeFrom) { // deceleration
 				
-				return MAX_SPEED * timePassed + cc;
+				return traveledOffset - .5 * deceleration * pow(timePassed - x2, 2) + y2;
 				
-			} else {
+			} else { // cruise
 				
-				return .5 * deceleration * pow(timePassed - x2, 2) + y2;
+				return traveledOffset + MAX_SPEED * timePassed + cc;
 				
 			}
 			
@@ -431,19 +454,51 @@ public class Path implements Drawable {
 		
 		public double getSpeedAtTime(double timePassed) {
 			
-			if (timePassed < accelerateTo) {
+			timePassed -= startTime;
+			
+			if (timePassed < accelerateTo) { // acceleration
 				
 				return startSpeed + acceleration * timePassed;
 				
-			} else if (timePassed > brakeFrom) {
+			} else if (timePassed > brakeFrom) { // deceleration
+				
+				return endSpeed + deceleration * (duration - timePassed);
+				
+			} else { // cruise
 				
 				return MAX_SPEED;
 				
-			} else {
+			}
+			
+		}
+		
+		public int getStateAtTraveled(double traveled) {
+			
+			if (traveled < getTraveledAtTime(accelerateTo)) { // acceleration
 				
-				return endSpeed - deceleration * (duration - timePassed);
+				return ACCELERATING_STATE;
+				
+			} else if (traveled > getTraveledAtTime(brakeFrom)) { // deceleration
+				
+				return DECELERATING_STATE;
+				
+			} else { // cruise
+				
+				return CRUISING_STATE;
 				
 			}
+			
+		}
+		
+		private double getStartTime() {
+			
+			return startTime;
+			
+		}
+		
+		private double getEndTime() {
+			
+			return startTime + duration;
 			
 		}
 		
