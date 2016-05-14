@@ -49,6 +49,12 @@ public final class Driver {
 	private static final String LOAD_TITLE = "Load...";
 	private static final String LOAD_BUTTON = "Open";
 	
+	private static final String FRAME_TITLE = "Tracker";
+	
+	private static final String DEFAULT_SAVE_LOCATION = System.getProperty("user.home") + "/Desktop";
+	private static final String FILE_EXTENSION = ".ktf";
+	private static final String FILE_TYPE_DESCRIPTION = "Kacper Tracker File";
+	
 	// modes
 	
 	public static final TrainMode TRAIN_MODE = new TrainMode();
@@ -87,17 +93,11 @@ public final class Driver {
 	public static TabsPanel tabsPanel;
 	public static JPanel viewPanel;
 	
-	private static final String FRAME_TITLE = "Tracker";
-	
-	private static final String DEFAULT_SAVE_LOCATION = System.getProperty("user.home") + "/Desktop";
-	private static final String FILE_EXTENSION = ".ktf";
-	private static final String FILE_TYPE_DESCRIPTION = "Kacper Tracker File";
-	
 	public static File currentSave;
 	public static Scene scene;
 	
-	public static ArrayList<Edit> edits = new ArrayList<>();
-	public static ArrayList<Edit> undone = new ArrayList<>();
+	public transient static ArrayList<Edit> edits = new ArrayList<>();
+	public transient static ArrayList<Edit> undone = new ArrayList<>();
 	
 	public static ArrayList<Tool> tools = new ArrayList<>();
 	public static Tool tool;
@@ -144,7 +144,7 @@ public final class Driver {
 			
 		}
 		if (scene == null) {
-						
+			
 			newScene();
 			
 		}
@@ -163,7 +163,7 @@ public final class Driver {
 		frame.setJMenuBar(new MenuBar());
 		frame.pack();
 		frame.setLocationRelativeTo(null);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);		
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		updateFrameTitle();
 		frame.setVisible(true);
@@ -207,7 +207,9 @@ public final class Driver {
 		
 		if (tool.isActivatable() && tool != Driver.tool && (Driver.tool == null || Driver.tool.isOverwritable()) //
 				&& (!tool.isModeSpecific() || tool.getMode() == mode)) {
-				
+			
+			tool.setFromFollow(false);
+			
 			if (Driver.tool != null) {
 				
 				Driver.tool.onAbort();
@@ -262,6 +264,12 @@ public final class Driver {
 				
 				selectTool(last.getFollowingTool());
 				last.getFollowingTool().setFromFollow(true);
+				
+				if (edit != null) {
+					
+					edit.setIsFollowedFrom(true);
+					
+				}
 				
 			}
 			
@@ -334,13 +342,13 @@ public final class Driver {
 	private static void updateFrameTitle() {
 		
 		if (currentSave == null) {
-				
+			
 			frame.setTitle(FRAME_TITLE);
 			
 		} else {
-		
+			
 			frame.setTitle(FRAME_TITLE + " - " + currentSave.getAbsolutePath());
-		
+			
 		}
 	}
 	
@@ -431,17 +439,31 @@ public final class Driver {
 	
 	public static void undo() {
 		
-		Edit last = edits.get(edits.size() - 1);
+		Edit last;
+		Edit next = edits.get(edits.size() - 1);
 		
-		last.undo();
-		
-		edits.remove(last);
-		undone.add(last);
-		
-		MenuBar.undoItem.setEnabled(!edits.isEmpty());
-		MenuBar.redoItem.setEnabled(true);
-		
-		tabsPanel.onUndo();
+		do {
+			
+			last = next;
+			last.undo();
+			
+			edits.remove(last);
+			undone.add(last);
+			
+			MenuBar.undoItem.setEnabled(!edits.isEmpty());
+			MenuBar.redoItem.setEnabled(true);
+			
+			tabsPanel.onUndo();
+			
+			if (edits.size() == 0) {
+				
+				break;
+				
+			}
+			
+			next = edits.get(edits.size() - 1);
+			
+		} while (next.isFollwedFrom());
 		
 		frame.repaint();
 		
@@ -449,17 +471,31 @@ public final class Driver {
 	
 	public static void redo() {
 		
-		Edit last = undone.get(undone.size() - 1);
+		Edit last;
+		Edit next = undone.get(undone.size() - 1);
 		
-		last.redo();
-		
-		undone.remove(last);
-		edits.add(last);
-		
-		MenuBar.undoItem.setEnabled(true);
-		MenuBar.redoItem.setEnabled(!undone.isEmpty());
-		
-		tabsPanel.onRedo();
+		do {
+			
+			last = next;
+			last.redo();
+			
+			undone.remove(last);
+			edits.add(last);
+			
+			MenuBar.undoItem.setEnabled(true);
+			MenuBar.redoItem.setEnabled(!undone.isEmpty());
+			
+			tabsPanel.onRedo();
+			
+			if (undone.size() == 0) {
+				
+				break;
+				
+			}
+			
+			next = undone.get(undone.size() - 1);
+			
+		} while (!next.isFollwedFrom());
 		
 		frame.repaint();
 		

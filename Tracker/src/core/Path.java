@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -36,7 +35,7 @@ public class Path implements Drawable {
 	
 	private static final int ACCELERATING_COLOR = AMBER_COLOR;
 	private static final int CRUISING_COLOR = GREEN_COLOR;
-	private static final int DECELERATING_COLOR = AMBER_COLOR;
+	private static final int DECELERATING_COLOR = RED_COLOR;
 	
 	private static final int ARROW_WIDTH = 30;
 	private static final int ARROW_LENGTH = 15;
@@ -46,7 +45,7 @@ public class Path implements Drawable {
 	private transient static BufferedImage amberArrowTexture;
 	private transient static BufferedImage greenArrowTexture;
 	
-	private static HashMap<Integer, BufferedImage> colorToImage = new HashMap<>();
+	private static ArrayList<BufferedImage> colors = new ArrayList<>();
 	
 	private ArrayList<RailLocation> connections;
 	private Train train;
@@ -83,9 +82,9 @@ public class Path implements Drawable {
 			
 		}
 		
-		colorToImage.put(RED_COLOR, redArrowTexture);
-		colorToImage.put(AMBER_COLOR, amberArrowTexture);
-		colorToImage.put(GREEN_COLOR, greenArrowTexture);
+		colors.add(redArrowTexture);
+		colors.add(amberArrowTexture);
+		colors.add(greenArrowTexture);
 		
 	}
 	
@@ -147,8 +146,8 @@ public class Path implements Drawable {
 		
 		IntStream.range(0, arrowDistances.size()).forEach((i) -> {
 			
-			double distance = -arrowDistances.get(i);
-			
+			double distance = length + arrowDistances.get(i);
+						
 			movements.stream().filter((movement) -> {
 				
 				return movement.getTraveledOffset() <= distance && distance <= movement.getTraveledOffset() + movement.getDistance();
@@ -243,7 +242,7 @@ public class Path implements Drawable {
 			AffineTransform transfrom = arrowLocations.get(i).getRailPointTransform();
 			g.transform(transfrom);
 			
-			g.drawImage(colorToImage.get(arrowColors.get(i)), -ARROW_WIDTH / 2, 0, ARROW_WIDTH, ARROW_LENGTH, null);
+			g.drawImage(colors.get(arrowColors.get(i)), -ARROW_WIDTH / 2, 0, ARROW_WIDTH, ARROW_LENGTH, null);
 			
 			g.setTransform(before);
 			

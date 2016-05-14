@@ -35,6 +35,7 @@ public class ExtrudeTool extends ActionTool {
 		
 		selectedBefore = new ArrayList<>(scene.selected);
 		added.clear();
+		connectionsAdded.clear();
 		
 		scene.selected.forEach((railPoint) -> {
 			
